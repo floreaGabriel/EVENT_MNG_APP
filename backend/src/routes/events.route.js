@@ -1,9 +1,14 @@
 import express from 'express';
-import { getEvents } from '../controllers/events.controller.js';
+import { getEvents, createEvent } from '../controllers/events.controller.js';
 import { protectedRoute } from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
 
-router.get("/getEvents", protectedRoute ,getEvents);
+// rute neprotejate
+router.get("/", getEvents);
+
+
+// rute protejate
+router.post("/createEvent", protectedRoute, createEvent);
 
 export default router;
