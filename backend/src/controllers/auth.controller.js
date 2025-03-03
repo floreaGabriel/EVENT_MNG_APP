@@ -125,6 +125,7 @@ export const updateProfile = async (req, res) => {
 
 export const checkAuth = (req, res) => {
     try {
+        console.log("Check AUTH");
         res.status(200).json(req.user); 
     } catch(err) {
         console.log("Error in checkAuth");
