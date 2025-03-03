@@ -169,7 +169,10 @@ export const updateEvent = async (req, res) => {
         const userId = req.user._id;
 
         console.log("Id event: ", eventId);
-        console.log("User id: " , userId);
+        //console.log("User id: " , userId);
+
+        
+
 
         const event = await Event.findById(eventId);
         if (!event) {
@@ -179,8 +182,13 @@ export const updateEvent = async (req, res) => {
             });
         }
 
+        console.log("Organizator ID: ", event.organizer);
+        console.log("Utilizator ID: ", userId);
+        console.log("Sunt egale?", event.organizer.toString() === userId.toString());
+        
+        //console.log("event gasit: ", event);
         // verificam daca useru curent este organziatorul evenimentului
-        if (event.organizer.toString() != userId.toString()) {
+        if (event.organizer.toString() !== userId.toString()) {
             return res.status(403).json({ 
                 success: false, 
                 message: 'You can only update your own events' 
@@ -207,6 +215,11 @@ export const updateEvent = async (req, res) => {
             { new: true, runValidators: true}
         );
 
+        res.status(200).json({ 
+            success: true, 
+            message: 'Event updated successfully', 
+            data: updatedEvent 
+          });
 
     } catch (error) {
         console.log("Eroare in functia updateEvent");
