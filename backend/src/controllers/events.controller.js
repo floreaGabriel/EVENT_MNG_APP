@@ -136,3 +136,84 @@ export const createEvent = async (req, res) => {
         });
     }
 };
+
+export const getEventById = async (req, res) => {
+    try {
+        console.log("GetEventById");
+        const {id:eventId}= req.params;
+        console.log(eventId);
+        const event = await Event.findById(eventId)
+            .populate('organizer', 'username avatar organizerProfile');
+
+        if (!event) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Event not found' 
+            });
+            }
+              
+        res.status(200).json({ success: true, data: event });
+    } catch (error) {
+        console.log("Eroare in functia getEventById");
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to get event by id', 
+            error: error.message 
+        });
+    }
+};
+
+export const updateEvent = async (req, res) => {
+    try {
+        const {id: eventId} = req.params;
+        const userId = req.user._id;
+
+        console.log("Id event: ", eventId);
+        console.log("User id: " , userId);
+
+        const event = await Event.findById(eventId);
+        if (!event) {
+            return res.status(404).json({ 
+              success: false, 
+              message: 'Event not found' 
+            });
+        }
+
+        // verificam daca useru curent este organziatorul evenimentului
+        if (event.organizer.toString() != userId.toString()) {
+            return res.status(403).json({ 
+                success: false, 
+                message: 'You can only update your own events' 
+              });
+        }
+
+        const updatedData = req.body;
+
+        if (updatedData.coverImageBase64) {
+            const uploadResult = await cloudinary.uploader.upload(updatedData.coverImageBase64, {
+                folder: 'events'
+            });
+            updatedData.media = {
+                ...updatedData.media,
+                coverImage: uploadResult.secure_url
+            };
+            delete updatedData.coverImageBase64;
+        }
+
+        // new: true -> returneaza noul obiect modificat, nu cel original
+        const updatedEvent = await Event.findByIdAndUpdate(
+            eventId,
+            updatedData,
+            { new: true, runValidators: true}
+        );
+
+
+    } catch (error) {
+        console.log("Eroare in functia updateEvent");
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to update event', 
+            error: error.message 
+        });
+    }
+}
