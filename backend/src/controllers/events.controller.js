@@ -22,7 +22,7 @@ export const getEvents = async (req, res) => {
         const filter = {/*status: 'PUBLISHED',*/ visibility: 'PUBLIC'};
 
         if (category) filter.category = category;
-        if (city) filter['location.city'] = city;
+        if (city) filter['location.city'] = { $regex: city, $options: 'i'};
         if (isFree) filter['pricing.isFree'] = isFree === 'true';
 
         if (startDate) {

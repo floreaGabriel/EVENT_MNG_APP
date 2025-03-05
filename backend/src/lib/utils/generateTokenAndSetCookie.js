@@ -7,13 +7,14 @@ export const generateTokenAndSetCookie = (id, res) => {
         expiresIn: process.env.JWT_EXPIRE || '24h'
     });
 
-    res.cookie("jwt", token, {
+    res.cookie("jwt", token, {  
         maxAge:  15 * 24 * 60 * 60 * 1000,
         httpOnly: true,
         sameSite: "strict",
         secure: process.env.NODE_ENV !== 'development',
     });
 
+    console.log("final generate token");
 
     return token;
 };

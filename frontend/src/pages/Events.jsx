@@ -13,16 +13,25 @@ const Events = () => {
     date: '',
   });
 
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalEvents: 0
+  })
+
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         let url = 'http://localhost:5001/api/events';
         const queryParams = [];
 
-        if (searchTerm) queryParams.push(`title=${encodeURIComponent(searchTerm)}`);
+        if (searchTerm) queryParams.push(`search=${encodeURIComponent(searchTerm)}`);
         if (filters.category) queryParams.push(`category=${encodeURIComponent(filters.category)}`);
-        if (filters.location) queryParams.push(`location=${encodeURIComponent(filters.location)}`);
-        if (filters.date) queryParams.push(`date=${encodeURIComponent(filters.date)}`);
+        if (filters.location) queryParams.push(`city=${encodeURIComponent(filters.location)}`);
+        if (filters.date) queryParams.push(`startDate=${encodeURIComponent(filters.date)}`);
+
+        queryParams.push(`page=${pagination.currentPage}`);
+        queryParams.push(`limit=6`);
 
         if (queryParams.length > 0) {
           url += `?${queryParams.join('&')}`;
@@ -39,8 +48,14 @@ const Events = () => {
           throw new Error('Failed to fetch events');
         }
 
+        
         const data = await response.json();
         setEvents(data.data);
+        setPagination({
+          currentPage:data.pagination.page,
+          totalPages: data.pagination.pages,
+          totalEvents: data.pagination.total
+        });
       } catch (error) {
         console.error('Error fetching events:', error);
         setError('Failed to load events. Please try again later.');
@@ -50,7 +65,14 @@ const Events = () => {
     };
 
     fetchEvents();
-  }, [searchTerm, filters]); // Re-randează când se schimbă searchTerm sau filtrele
+  }, [searchTerm, filters, pagination.currentPage]); // Re-randează când se schimbă searchTerm sau filtrele
+
+  const handlePagination = (newPage) => {
+    setPagination(prev => ({
+      ...prev,
+      currentPage: newPage
+    }));
+  }
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -67,7 +89,7 @@ const Events = () => {
     <div className="bg-white">
       {/* Search and Filters Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-4 sm:space-y-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-4 sm:space-y-0 ">
           {/* Search Bar */}
           <div className="w-full sm:w-1/3">
             <input
@@ -75,7 +97,7 @@ const Events = () => {
               placeholder="Search events by title..."
               value={searchTerm}
               onChange={handleSearch}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-500 text-gray-500"
             />
           </div>
 
@@ -84,7 +106,7 @@ const Events = () => {
             <select
               value={filters.category}
               onChange={(e) => handleFilterChange('category', e.target.value)}
-              className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-500"
             >
               <option value="">All Categories</option>
               <option value="Concert">Concert</option>
@@ -100,17 +122,18 @@ const Events = () => {
 
             <input
               type="text"
-              placeholder="Filter by location (city, country)..."
+              placeholder="Filter by location (city)"
               value={filters.location}
               onChange={(e) => handleFilterChange('location', e.target.value)}
-              className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-500"
             />
 
+            <label className='text-sm text-gray-500 mb-1 pt-2.5'> Events starting from</label>
             <input
               type="date"
               value={filters.date}
               onChange={(e) => handleFilterChange('date', e.target.value)}
-              className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-500"
             />
           </div>
         </div>
@@ -182,6 +205,87 @@ const Events = () => {
           </div>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {!loading && events.length > 0 && (
+        <div className="flex justify-center mt-10">
+          <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+            {/* Previous Page Button */}
+            <button
+              onClick={() => handlePageChange(pagination.currentPage - 1)}
+              disabled={pagination.currentPage === 1}
+              className={`relative inline-flex items-center px-2 py-2 rounded-l-md border ${
+                pagination.currentPage === 1 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-white text-gray-500 hover:bg-gray-50'
+              } text-sm font-medium`}
+            >
+              <span className="sr-only">Previous</span>
+              <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            </button>
+            
+            {/* Page Numbers */}
+            {[...Array(pagination.totalPages).keys()].map((_, index) => {
+              const pageNumber = index + 1;
+              // Only show a limited number of page buttons
+              if (
+                pageNumber === 1 || 
+                pageNumber === pagination.totalPages || 
+                (pageNumber >= pagination.currentPage - 1 && pageNumber <= pagination.currentPage + 1)
+              ) {
+                return (
+                  <button
+                    key={pageNumber}
+                    onClick={() => handlePageChange(pageNumber)}
+                    className={`relative inline-flex items-center px-4 py-2 border ${
+                      pagination.currentPage === pageNumber
+                        ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                    } text-sm font-medium`}
+                  >
+                    {pageNumber}
+                  </button>
+                );
+              }
+              
+              // Add ellipsis to indicate skipped pages
+              if (
+                (pageNumber === 2 && pagination.currentPage > 3) ||
+                (pageNumber === pagination.totalPages - 1 && pagination.currentPage < pagination.totalPages - 2)
+              ) {
+                return (
+                  <span
+                    key={`ellipsis-${pageNumber}`}
+                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium"
+                  >
+                    ...
+                  </span>
+                );
+              }
+              
+              return null;
+            })}
+            
+            {/* Next Page Button */}
+            <button
+              onClick={() => handlePageChange(pagination.currentPage + 1)}
+              disabled={pagination.currentPage === pagination.totalPages}
+              className={`relative inline-flex items-center px-2 py-2 rounded-r-md border ${
+                pagination.currentPage === pagination.totalPages
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-white text-gray-500 hover:bg-gray-50'
+              } text-sm font-medium`}
+            >
+              <span className="sr-only">Next</span>
+              <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </nav>
+        </div>
+      )}
     </div>
   );
 };
