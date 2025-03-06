@@ -155,7 +155,10 @@ const Events = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
           </div>
         ) : error ? (
-          <div className="text-center mt-10 text-red-500">{error}</div>
+          <div className="text-center Component(filters.date)}`);
+
+        queryParams.push(`page=${pagination.currentPage}`);
+        queryParams.push(`limit=6`);mt-10 text-red-500">{error}</div>
         ) : (
           <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {events.length > 0 ? (
@@ -212,7 +215,7 @@ const Events = () => {
           <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
             {/* Previous Page Button */}
             <button
-              onClick={() => handlePageChange(pagination.currentPage - 1)}
+              onClick={() => handlePagination(pagination.currentPage - 1)}
               disabled={pagination.currentPage === 1}
               className={`relative inline-flex items-center px-2 py-2 rounded-l-md border ${
                 pagination.currentPage === 1 
@@ -238,7 +241,7 @@ const Events = () => {
                 return (
                   <button
                     key={pageNumber}
-                    onClick={() => handlePageChange(pageNumber)}
+                    onClick={() => handlePagination(pageNumber)}
                     className={`relative inline-flex items-center px-4 py-2 border ${
                       pagination.currentPage === pageNumber
                         ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
@@ -270,7 +273,7 @@ const Events = () => {
             
             {/* Next Page Button */}
             <button
-              onClick={() => handlePageChange(pagination.currentPage + 1)}
+              onClick={() => handlePagination(pagination.currentPage + 1)}
               disabled={pagination.currentPage === pagination.totalPages}
               className={`relative inline-flex items-center px-2 py-2 rounded-r-md border ${
                 pagination.currentPage === pagination.totalPages

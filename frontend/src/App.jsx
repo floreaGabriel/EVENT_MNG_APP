@@ -8,6 +8,8 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Events from './pages/Events'
+import CreateEvent from './pages/CreateEvent'
+
 
 function App() {
   const [user, setUser] = useState(null);
@@ -81,7 +83,11 @@ function App() {
              */}
 
             {/** Protected routes */}
-            
+            <Route path='/create-event' element= {
+              <ProtectedRoute user={user}>
+
+                <CreateEvent user={user}/>
+              </ProtectedRoute>} />
           </Routes>
 
 

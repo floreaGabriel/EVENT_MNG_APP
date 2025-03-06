@@ -59,7 +59,7 @@ export const getEvents = async (req, res) => {
 
         const total = await Event.countDocuments(filter);
 
-        console.log(events);
+        //console.log(events);
 
         res.status(200).json({
             success: true, 
@@ -82,6 +82,10 @@ export const getEvents = async (req, res) => {
 export const createEvent = async (req, res) => {
 
     try {
+
+        console.log("Create event func: ", req);
+
+
         const userId = req.user._id; // extragem utilizatorul 
 
         // verificam daca este organizer
