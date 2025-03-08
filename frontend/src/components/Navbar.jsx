@@ -61,9 +61,6 @@ const Navbar = ({ user, setUser }) => {
               <Link to="/events" className="border-transparent text-gray-500 hover:border-blue-500 hover:text-blue-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                 Events
               </Link>
-              <Link to="/categories" className="border-transparent text-gray-500 hover:border-blue-500 hover:text-blue-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                Categories
-              </Link>
               {user?.roles?.includes('ORGANIZER') && (
                 <Link to="/create-event" className="border-transparent text-gray-500 hover:border-blue-500 hover:text-blue-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                   Create Event

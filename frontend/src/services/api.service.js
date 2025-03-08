@@ -111,29 +111,6 @@ export const eventsApi = {
     }),
 };
 
-
-export const categoriesApi = {
-
-  getCategoryCounts: async () => {
-    // Fetch all events and count by category
-    const result = await eventsApi.getEvents();
-    const events = result.data;
-    
-    const categories = [
-      'Concert', 'Festival', 'Workshop', 'Conference', 
-      'Party', 'Exhibition', 'SportEvent', 'Charity', 'Other'
-    ];
-    
-    // Count events by category
-    const counts = {};
-    categories.forEach(category => {
-      counts[category] = events.filter(event => event.category === category).length;
-    });
-
-    return counts;
-  }
-};
-
 // Export the raw fetchApi for custom calls
 export { fetchApi };
 
@@ -141,6 +118,5 @@ export { fetchApi };
 export default {
   auth: authApi,
   events: eventsApi,
-  categories: categoriesApi,
   fetch: fetchApi
 };

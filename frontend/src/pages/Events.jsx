@@ -38,7 +38,7 @@ const Events = () => {
 
         setEvents(data.data);
         setPagination({
-          currentPage:data.pagination.page,
+          currentPage:data.pagination.page, 
           totalPages: data.pagination.pages,
           totalEvents: data.pagination.total
         });
