@@ -1,6 +1,7 @@
 // src/pages/Home.jsx
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { eventsApi } from '../services/api.service';
 
 const Home = () => {
   const [featuredEvents, setFeaturedEvents] = useState([]);
@@ -10,18 +11,9 @@ const Home = () => {
   useEffect(() => {
     const fetchFeaturedEvents = async () => {
       try {
-        const response = await fetch('http://localhost:5001/api/events?limit=4', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch featured events');
-        }
-
-        const data = await response.json();
+        const params = { limit: 4 };
+        const data = await eventsApi.getEvents(params);
         setFeaturedEvents(data.data);
       } catch (error) {
         console.error('Error fetching featured events:', error);

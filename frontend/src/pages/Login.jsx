@@ -72,20 +72,7 @@ const Login = ({ setUser }) => {
     setLoginError('');
     
     try {
-      const response = await fetch('http://localhost:5001/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(formData),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Invalid credentials');
-      }
+      const data = await authApi.login(formData);
       
       console.log('Login successful:', data);
       
@@ -108,6 +95,7 @@ const Login = ({ setUser }) => {
       const params = new URLSearchParams(location.search);
       const redirectTo = params.get('redirect') || '/';
       navigate(redirectTo);
+      
       
     } catch (error) {
       console.error('Login error:', error);

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { eventsApi } from "../services/api.service";
 
 const CreateEvent = ({user}) => {
 
@@ -278,72 +279,62 @@ const CreateEvent = ({user}) => {
         });
     };
 
-    // Form submission handler
-    const handleSubmit = async (asDraft = false) => {
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        await createEvent(false);
+    };
+
+    // Function to create event (used for both regular submit and save as draft)
+    const createEvent = async (asDraft = false) => {
         try {
             console.log("Handle submit");
-        // Prevent multiple submissions
-        if (isSubmitting) return;
-        
-        // Validate form
-        if (!validateForm()) return;
-        
-        setIsSubmitting(true);
-        
-        // Prepare data for submission
-        const eventData = { ...formData };
-        
-        // Set status if saving as draft
-        if (asDraft) {
-            eventData.status = 'DRAFT';
-        }
-        
-        // Convert dates to ISO format
-        if (eventData.dates.start) {
-            eventData.dates.start = new Date(eventData.dates.start).toISOString();
-        }
-        if (eventData.dates.end) {
-            eventData.dates.end = new Date(eventData.dates.end).toISOString();
-        }
-        if (eventData.dates.doorsOpen) {
-            eventData.dates.doorsOpen = new Date(eventData.dates.doorsOpen).toISOString();
-        }
-        
-        // Process cover image
-        if (coverImageFile) {
-            const base64Data = await getBase64FromFile(coverImageFile);
-            eventData.coverImageBase64 = base64Data;
-        }
-        
-        // Make API request
-        const response = await fetch('http://localhost:5001/api/events/createEvent', {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify(eventData)
-        });
-        
-
-        console.log(response);
-
-        const data = await response.json();
-        
-        if (!response.ok) {
-            throw new Error(data.message || 'Failed to create event');
-        }
-        
-        // Redirect to the event page or events list
-        navigate(`/events/${data.data._id}`);
-        
+            // Prevent multiple submissions
+            if (isSubmitting) return;
+            
+            // Validate form
+            if (!validateForm()) return;
+            
+            setIsSubmitting(true);
+            
+            // Prepare data for submission
+            const eventData = { ...formData };
+            
+            // Set status if saving as draft
+            if (asDraft) {
+                eventData.status = 'DRAFT';
+            }
+            
+            // Convert dates to ISO format
+            if (eventData.dates.start) {
+                eventData.dates.start = new Date(eventData.dates.start).toISOString();
+            }
+            if (eventData.dates.end) {
+                eventData.dates.end = new Date(eventData.dates.end).toISOString();
+            }
+            if (eventData.dates.doorsOpen) {
+                eventData.dates.doorsOpen = new Date(eventData.dates.doorsOpen).toISOString();
+            }
+            
+            // Process cover image
+            if (coverImageFile) {
+                const base64Data = await getBase64FromFile(coverImageFile);
+                eventData.coverImageBase64 = base64Data;
+            }
+            
+            // Use our API service to create the event
+            const data = await eventsApi.createEvent(eventData);
+            
+            // Redirect to the event page or events list
+            navigate(`/events/${data.data._id}`);
+            
         } catch (error) {
-        setError(error.message || 'An error occurred while creating the event');
-        console.error('Error creating event:', error);
+            setError(error.message || 'An error occurred while creating the event');
+            console.error('Error creating event:', error);
         } finally {
-        setIsSubmitting(false);
+            setIsSubmitting(false);
         }
     };
+
 
         return (
     <div className="bg-gray-50 min-h-screen py-12">

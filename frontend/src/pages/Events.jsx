@@ -1,6 +1,7 @@
 // src/pages/Events.jsx
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { eventsApi } from '../services/api.service';
 
 const Events = () => {
   const [events, setEvents] = useState([]);
@@ -11,6 +12,7 @@ const Events = () => {
     category: '',
     location: '',
     date: '',
+    isFree: false
   });
 
   const [pagination, setPagination] = useState({
@@ -22,34 +24,18 @@ const Events = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        let url = 'http://localhost:5001/api/events';
-        const queryParams = [];
+        // pregatim parametrii pentru api
+        const params = {
+          search: searchTerm || undefined,
+          category: filters.category || undefined,
+          city: filters.location || undefined,
+          startDate: filters.date || undefined,
+          page: pagination.currentPage,
+          limit: 6
+        };
 
-        if (searchTerm) queryParams.push(`search=${encodeURIComponent(searchTerm)}`);
-        if (filters.category) queryParams.push(`category=${encodeURIComponent(filters.category)}`);
-        if (filters.location) queryParams.push(`city=${encodeURIComponent(filters.location)}`);
-        if (filters.date) queryParams.push(`startDate=${encodeURIComponent(filters.date)}`);
+        const data = await eventsApi.getEvents(params);
 
-        queryParams.push(`page=${pagination.currentPage}`);
-        queryParams.push(`limit=6`);
-
-        if (queryParams.length > 0) {
-          url += `?${queryParams.join('&')}`;
-        }
-
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch events');
-        }
-
-        
-        const data = await response.json();
         setEvents(data.data);
         setPagination({
           currentPage:data.pagination.page,
