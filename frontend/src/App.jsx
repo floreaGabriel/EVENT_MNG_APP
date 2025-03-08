@@ -9,7 +9,7 @@ import Home from './pages/Home'
 import Login from './pages/Login'
 import Events from './pages/Events'
 import CreateEvent from './pages/CreateEvent'
-import Categories from './pages/Categories'
+import EventDetails from './pages/EventDetails'
 
 
 function App() {
@@ -72,8 +72,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login setUser={setUser} />} />
             <Route path="/events" element={<Events />} />
-            <Route path="/categories" element={<Categories />} />
-            
+            <Route path="/events/:id" element={<EventDetails user={user} />} />
             {/* 
             <Route path="/events/:id" element={<EventDetails />} />
             <Route path="/categories" element={<Categories />} />
@@ -88,7 +87,6 @@ function App() {
             {/** Protected routes */}
             <Route path='/create-event' element= {
               <ProtectedRoute user={user}>
-
                 <CreateEvent user={user}/>
               </ProtectedRoute>} />
           </Routes>
