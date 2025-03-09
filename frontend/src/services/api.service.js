@@ -77,6 +77,9 @@ export const authApi = {
     fetchApi('/auth/updateProfile', {
       method: 'PUT',
       body: JSON.stringify(profileData),
+      headers: {
+        'Content-Type': 'application/json'
+      }
     }),
 };
 
@@ -111,6 +114,29 @@ export const eventsApi = {
     }),
 };
 
+
+export const registrationsApi = {
+
+  registerForEvent: (registrationData) => 
+    fetchApi(`/registrations/register`, {
+      method: 'POST',
+      body: JSON.stringify(registrationData)
+  }),
+
+  getUserRegistration: () =>
+    fetchApi(`/registrations/my-registrations`),
+
+  cancelRegistration: (registrationId) => 
+    fetchApi(`/registrations/cancel/${registrationId}`, {
+      method: 'PUT',
+  }),
+
+  checkRegistrationStatus: (registrationId) => 
+    fetchApi(`/registrations/check/${registrationId}`),
+  
+
+
+}
 // Export the raw fetchApi for custom calls
 export { fetchApi };
 
@@ -118,5 +144,6 @@ export { fetchApi };
 export default {
   auth: authApi,
   events: eventsApi,
+  registrations: registrationsApi,
   fetch: fetchApi
 };

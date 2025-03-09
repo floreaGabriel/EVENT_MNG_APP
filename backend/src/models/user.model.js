@@ -61,8 +61,7 @@ const userSchema = new mongoose.Schema({
         // abonamente si rating
         subscriptionPlan: {
             type: String,
-            enum: ['FREE', 'PREMIUM', 'ENTERPRISE'],
-            default: 'FREE'
+            enum: ['FREE', 'PREMIUM', 'ENTERPRISE']
         },
         rating: {
             average: {type: Number, default: 0},

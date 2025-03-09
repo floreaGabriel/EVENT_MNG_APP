@@ -6,6 +6,7 @@ import cors from 'cors';
 
 import authRoutes from './routes/auth.route.js';
 import eventsRoute from './routes/events.route.js';
+import registrationRoute from './routes/registration.route.js'
 
 dotenv.config();
 
@@ -20,10 +21,13 @@ app.use(cors({
 }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(express.json({limit: '50mb'}));
+app.use(express.urlencoded({limit: '50mb', extended: true}));
 
 
 app.use("/api/auth", authRoutes);
 app.use("/api/events", eventsRoute);
+app.use("/api/registrations", registrationRoute);
 
 app.listen(5001, () => {
     connectDB();

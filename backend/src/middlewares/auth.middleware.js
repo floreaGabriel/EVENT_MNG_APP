@@ -15,8 +15,8 @@ export const protectedRoute = async (req,res,next) => {
                  token = authHeader.split(' ')[1];
              }
          }
-         console.log('cookies: ', req.cookies);
-         console.log('token: ', token);
+         //console.log('cookies: ', req.cookies);
+         //console.log('token: ', token);
          
         if (!token) {
             console.log("No token providede error----");
@@ -24,7 +24,7 @@ export const protectedRoute = async (req,res,next) => {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        console.log('Token decodat:', decoded);
+        // console.log('Token decodat:', decoded);
         
         if (!decoded) {
             return res.status(401).json({ success: false, message: 'Invalid token' });
@@ -36,6 +36,7 @@ export const protectedRoute = async (req,res,next) => {
         }
 
         req.user = user;
+        console.log("Am trecut de protected route...");
         next();     
     } catch(err) {
         return res.status(500).json({ success: false, message: 'User retrieval failed', error: err.message });

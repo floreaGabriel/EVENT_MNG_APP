@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { eventsApi } from '../services/api.service';
+import { eventsApi, registrationsApi } from '../services/api.service';
 import GoogleMap from '../components/GoogleMap';
 
 const EventDetails = ({ user }) => {
@@ -11,7 +11,13 @@ const EventDetails = ({ user }) => {
   const [error, setError] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [registering, setRegistering] = useState(false);
-
+  const [registrationStatus, setRegistrationStatus] = useState(null);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState('');
+  const [registrationData, setRegistrationData] = useState(null);
+  const [showRegistrationModal, setShowRegistrationModal] = useState(false);
+  const [registrationError, setRegistrationError] = useState('');
+  const [ticketQuantity, setTicketQuantity] = useState(1);
   // Fetch event details when component mounts
   useEffect(() => {
     const fetchEventDetails = async () => {
@@ -19,6 +25,13 @@ const EventDetails = ({ user }) => {
         setLoading(true);
         const response = await eventsApi.getEventById(id);
         setEvent(response.data);
+
+         // Set default selected ticket
+         if (response.data.pricing && 
+          response.data.pricing.tickets && 
+          response.data.pricing.tickets.length > 0) {
+          setSelectedTicket(response.data.pricing.tickets[0].type);
+        }
       } catch (error) {
         console.error('Error fetching event details:', error);
         setError('Failed to load event details. Please try again later.');
@@ -30,23 +43,102 @@ const EventDetails = ({ user }) => {
     fetchEventDetails();
   }, [id]);
 
+
+  // check if user already registered for event
+  useEffect(() => {
+    const checkRegistrationStatus = async () => {
+      // daca nu exista un user sau un event return... 
+      if (!user || !event) return;
+
+
+      try {
+        const response = await registrationsApi.checkRegistrationStatus(id);
+        if (response.isRegistered) {
+          setRegistrationStatus(response.status);
+          setRegistrationData(response.data);
+          setRegistrationSuccess(true);
+        }
+      } catch (error) {
+        console.error('Error checking registration status:', error);
+      }
+    };
+
+    checkRegistrationStatus();
+  }, [id, user, event]);
+
+
   // Function to handle event registration
   const handleRegister = async () => {
     // Check if user is logged in
+
+    console.log("HANDLE REGISTER...");
+    console.log("User incearca sa se inregistreze: ", user);
     if (!user) {
       setShowLoginModal(true);
       return;
     }
 
+    if (registrationStatus && registrationStatus !== 'CANCELLED') {
+      setRegistrationSuccess(true);
+      return;
+    }
+
+    setShowRegistrationModal(true);
+  };
+
+  const submitRegistration = async () => {
     try {
       setRegistering(true);
-      // This would be implemented in the next phase with your backend
-      // await api.registerForEvent(id);
-      alert('Registration feature coming soon!');
-      setRegistering(false);
+      setRegistrationError('');
+
+
+      if (!selectedTicket) {
+        setRegistrationError('Please select a ticket type');
+        setRegistering(false);
+        return;
+      }
+
+      // prepare registration data 
+
+      const registrationPayload = {
+        eventId: id,
+        ticketType: selectedTicket,
+        quantity: ticketQuantity
+      }
+
+      const response = await registrationsApi.registerForEvent(registrationPayload);
+      setRegistrationSuccess(true);
+      setRegistrationStatus(response.data.status);
+      setRegistrationData(response.data);
+      setShowRegistrationModal(false);
     } catch (error) {
       console.error('Error registering for event:', error);
+      setRegistrationError(error.message || 'Failed to register for event. Please try again.');
+    } finally {
       setRegistering(false);
+    }
+  };
+
+
+  const handleCancelRegistration = async () => {
+    try {
+      setCancelling(true);
+      if (!registrationData || !registrationData._id) {
+        throw new Error('Registration data not found');
+      }
+      
+      await registrationsApi.cancelRegistration(registrationData._id);
+      setRegistrationStatus('CANCELLED');
+      setCancelling(false);
+      
+      // Refresh registration data
+      const response = await registrationsApi.checkRegistrationStatus(id);
+      if (response.isRegistered) {
+        setRegistrationData(response.data);
+      }
+    } catch (error) {
+      console.error('Error cancelling registration:', error);
+      setCancelling(false);
     }
   };
 
@@ -92,6 +184,97 @@ const EventDetails = ({ user }) => {
 
   return (
     <div className="bg-gray-50 min-h-screen pb-16">
+      {/* Registration Modal */}
+      {showRegistrationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowRegistrationModal(false)}>
+          <div className="bg-white rounded-lg p-8 max-w-md w-full" onClick={e => e.stopPropagation()}>
+            <h2 className="text-2xl font-bold mb-4">Complete Your Registration</h2>
+            
+            {registrationError && (
+              <div className="mb-4 bg-red-50 text-red-700 p-3 rounded-md border border-red-200">
+                {registrationError}
+              </div>
+            )}
+            
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Ticket Type
+              </label>
+              <select
+                value={selectedTicket}
+                onChange={(e) => setSelectedTicket(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Select a ticket</option>
+                {event.pricing.tickets.map((ticket, index) => (
+                  <option key={index} value={ticket.type} disabled={ticket.availableQuantity !== undefined && ticket.availableQuantity < 1}>
+                    {ticket.type} - {ticket.price.toFixed(2)} {ticket.currency} {ticket.availableQuantity !== undefined ? `(${ticket.availableQuantity} left)` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Quantity
+              </label>
+              <input
+                type="number"
+                min="1"
+                max={selectedTicket ? event.pricing.tickets.find(t => t.type === selectedTicket)?.availableQuantity || 10 : 1}
+                value={ticketQuantity}
+                onChange={(e) => setTicketQuantity(parseInt(e.target.value) || 1)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowRegistrationModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitRegistration}
+                disabled={registering || !selectedTicket}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+              >
+                {registering ? 'Processing...' : 'Complete Registration'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Login Modal */}
+      {showLoginModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowLoginModal(false)}>
+          <div className="bg-white rounded-lg p-8 max-w-md w-full" onClick={e => e.stopPropagation()}>
+            <h2 className="text-2xl font-bold mb-4">Login Required</h2>
+            <p className="mb-6">You need to be logged in to register for events.</p>
+            <div className="flex space-x-4">
+              <button
+                onClick={() => {
+                  navigate('/login', { state: { from: `/events/${id}` } });
+                }}
+                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+              >
+                Log In
+              </button>
+              <button
+                onClick={() => {
+                  navigate('/register', { state: { from: `/events/${id}` } });
+                }}
+                className="flex-1 border border-blue-600 text-blue-600 py-2 px-4 rounded hover:bg-blue-50"
+              >
+                Register
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hero Banner */}
       <div 
         className="w-full h-80 md:h-96 bg-cover bg-center relative" 
@@ -328,23 +511,62 @@ const EventDetails = ({ user }) => {
               </div>
               
               {/* Registration Button */}
-              <button
-                onClick={handleRegister}
-                disabled={registering}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {registering ? (
-                  <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Processing...
-                  </span>
-                ) : (
-                  'Register for this Event'
-                )}
-              </button>
+              {registrationSuccess ? (
+                <div className="mb-4 p-4 border border-green-200 rounded-md bg-green-50">
+                  <p className="text-green-700 font-medium text-center">
+                    {registrationStatus === 'CONFIRMED' ? 
+                      'You are registered for this event!' : 
+                      registrationStatus === 'CANCELLED' ? 
+                      'Your registration has been cancelled.' :
+                      'Your registration is pending.'}
+                  </p>
+                  {registrationStatus === 'CONFIRMED' && (
+                    <p className="text-sm text-green-600 text-center mt-2">
+                      We'll send your ticket details to your email
+                    </p>
+                  )}
+                  {registrationStatus === 'PENDING' && (
+                    <p className="text-sm text-green-600 text-center mt-2">
+                      Your registration is being processed
+                    </p>
+                  )}
+                  {(registrationStatus === 'CONFIRMED' || registrationStatus === 'PENDING') && (
+                    <button
+                      onClick={handleCancelRegistration}
+                      disabled={cancelling}
+                      className="mt-3 w-full bg-white border border-red-300 text-red-500 hover:bg-red-50 font-medium py-2 px-4 rounded-md disabled:opacity-50"
+                    >
+                      {cancelling ? 'Cancelling...' : 'Cancel Registration'}
+                    </button>
+                  )}
+                  {registrationStatus === 'CANCELLED' && (
+                    <button
+                      onClick={handleRegister}
+                      className="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md"
+                    >
+                      Register Again
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={handleRegister}
+                  disabled={registering}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {registering ? (
+                    <span className="flex items-center justify-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing...
+                    </span>
+                  ) : (
+                    'Register for this Event'
+                  )}
+                </button>
+              )}
               
               {/* Login Reminder */}
               {!user && (

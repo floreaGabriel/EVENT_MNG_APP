@@ -10,6 +10,9 @@ import Login from './pages/Login'
 import Events from './pages/Events'
 import CreateEvent from './pages/CreateEvent'
 import EventDetails from './pages/EventDetails'
+import Register from './pages/Register'
+import ParticipantDashboard from './pages/ParticipantDashboard'
+import OrganizerDashboard from './pages/OrganizerDashboard'
 
 
 function App() {
@@ -73,6 +76,7 @@ function App() {
             <Route path="/login" element={<Login setUser={setUser} />} />
             <Route path="/events" element={<Events />} />
             <Route path="/events/:id" element={<EventDetails user={user} />} />
+            <Route path="/register" element={<Register setUser={setUser} />} />
             {/* 
             <Route path="/events/:id" element={<EventDetails />} />
             <Route path="/categories" element={<Categories />} />
@@ -88,6 +92,14 @@ function App() {
             <Route path='/create-event' element= {
               <ProtectedRoute user={user}>
                 <CreateEvent user={user}/>
+              </ProtectedRoute>} />
+            <Route path='/profile-participant' element={
+              <ProtectedRoute user = {user}>
+                <ParticipantDashboard user={user}/>
+              </ProtectedRoute>} />
+            <Route path='/profile-organizer' element={
+              <ProtectedRoute user = {user}>
+                <OrganizerDashboard user={user}/>
               </ProtectedRoute>} />
           </Routes>
 

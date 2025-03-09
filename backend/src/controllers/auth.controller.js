@@ -100,26 +100,82 @@ export const logout = async (req, res) => {
 }
 
 export const updateProfile = async (req, res) => {
+    console.log("Actualizare profil ...");
     try {
-        const {profilePic} = req.body;
+
+        console.log("Actualizare profil ...");
+        const userData = req.body;
         const userID = req.user._id;
 
-        if (!profilePic) {
-            return res.status(400).json({
-                message: "Profile pic is required" 
-            })
+        let profilePicUrl = undefined;
+        if (userData.profilePic) {
+            const uploadResponse = await cloudinary.uploader.upload(userData.profilePic);
+            profilePicUrl = uploadResponse.secure_url;
         }
 
-        const uploadResponse = await cloudinary.uploader.upload(profilePic);
+        let updateData = {};
 
-        const updatedUser = await User.findByIdAndUpdate(userID, {profilePic: uploadResponse.secure_url}, {new:true});
+        if (userData.firstname) updateData.firstname = userData.firstname;
+        if (userData.lastname) updateData.lastname = userData.lastname;
+        if (userData.username) updateData.username = userData.username;
+        if (userData.email) updateData.email = userData.email;
+        if (profilePicUrl) updateData.avatar = profilePicUrl;
 
-        res.status(200).json(updatedUser);
+        // pentru participant
 
+        if (userData.participantProfile) {
+            updateData.participantProfile = {
+                preferences: userData.participantProfile.preferences || {},
+                contactInfo: userData.participantProfile.contactInfo || {},
+                socialMedia: userData.participantProfile.socialMedia || {},
+                description: userData.participantProfile.description || ''
+              };
+        }
+
+        // pentru organizator 
+
+        if (userData.organizerProfile) {
+            updateData.organizerProfile = {
+              description: userData.organizerProfile.description || '',
+              contactInfo: userData.organizerProfile.contactInfo || {},
+              subscriptionPlan: userData.organizerProfile.subscriptionPlan || 'FREE'
+            };
+        }
+    
+        const options = { 
+        new: true,      // returnează documentul actualizat
+        runValidators: true  // validează datele înainte de actualizare
+        };
+
+        const updatedUser = await User.findByIdAndUpdate(
+            userID,
+            updateData,
+            options
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({
+              success: false,
+              message: "Utilizatorul nu a fost găsit"
+            });
+        }
+      
+          // Returnăm obiectul utilizator fără parolă
+        const { password, ...userWithoutPassword } = updatedUser.toObject();
+        
+        res.status(200).json({
+            success: true,
+            message: "Profil actualizat cu succes",
+            data: userWithoutPassword
+        });
 
     } catch(err) {
-        console.log('Error in update profile');
-        res.status(500).json({message: "Error in updateProfile"});
+        console.log('Eroare la actualizarea profilului:', err);
+        res.status(500).json({
+            success: false,
+            message: "Eroare la actualizarea profilului",
+            error: err.message
+        });
     }
 }
 
@@ -127,6 +183,7 @@ export const checkAuth = (req, res) => {
     try {
         console.log("Check AUTH");
         res.status(200).json(req.user); 
+        console.log("Am trecut de check AUTH...");
     } catch(err) {
         console.log("Error in checkAuth");
         res.status(500).json({message: "Internal server error"});
