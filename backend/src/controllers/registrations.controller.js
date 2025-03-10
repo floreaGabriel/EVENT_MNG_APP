@@ -6,7 +6,7 @@ export const registerForEvent = async (req, res) => {
     try {
 
 
-        console.log("REGISTER FOR EVENT")
+        console.log("REGISTER FOR EVENT");
         const userId = req.user._id;
         const { eventId, ticketType, quantity = 1} = req.body;
 
@@ -166,6 +166,9 @@ export const getUserRegistrations = async (req, res) => {
 
 export const cancelRegistration = async (req, res) => {
     try {
+
+        console.log("Cancelling registration...");
+
         const userId = req.user._id;
         const { registrationId } = req.params;
 
@@ -199,6 +202,8 @@ export const cancelRegistration = async (req, res) => {
         if (event) {
             event.currentAttendees = Math.max(0, (event.currentAttendees || 0) - registration.quantity);
             
+            console.log("Verific daca s-a sters in functia cancel...");
+            console.log("current attendes: ", event.currentAttendees);
             // Return tickets to available pool if applicable
             const ticketIndex = event.pricing.tickets.findIndex(t => t.type === registration.ticketType);
             if (ticketIndex >= 0 && event.pricing.tickets[ticketIndex].availableQuantity !== undefined) {
@@ -222,9 +227,13 @@ export const cancelRegistration = async (req, res) => {
     }
 };
 
+// TO DO: AM RAMAS LA VERIFICARE DACA MERGE SA TE INREGISTREZI LA UN EVENIMENT
 
 export const checkRegistrationStatus = async (req, res) => {
     try {
+
+        console.log("Check Registration function...");
+
         const userId = req.user._id;
         const { eventId } = req.params;
 

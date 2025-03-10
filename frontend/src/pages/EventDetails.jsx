@@ -18,6 +18,7 @@ const EventDetails = ({ user }) => {
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
   const [registrationError, setRegistrationError] = useState('');
   const [ticketQuantity, setTicketQuantity] = useState(1);
+  const [cancelling, setCancelling] = useState(false);
   // Fetch event details when component mounts
   useEffect(() => {
     const fetchEventDetails = async () => {
@@ -105,7 +106,7 @@ const EventDetails = ({ user }) => {
         ticketType: selectedTicket,
         quantity: ticketQuantity
       }
-
+      console.log(`Userul ${user.firstname} incearca sa se inregistreze la eveniment ... `);
       const response = await registrationsApi.registerForEvent(registrationPayload);
       setRegistrationSuccess(true);
       setRegistrationStatus(response.data.status);
@@ -122,6 +123,8 @@ const EventDetails = ({ user }) => {
 
   const handleCancelRegistration = async () => {
     try {
+
+      console.log(`Userul ${user.firstname} incearca sa dea cancel la inregistrare`);
       setCancelling(true);
       if (!registrationData || !registrationData._id) {
         throw new Error('Registration data not found');
