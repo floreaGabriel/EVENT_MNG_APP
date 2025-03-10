@@ -134,7 +134,14 @@ export const registrationsApi = {
   checkRegistrationStatus: (registrationId) => 
     fetchApi(`/registrations/check/${registrationId}`),
   
-
+  getEventRegistrations: (eventId) =>
+    fetchApi(`/registrations/event/${eventId}`),
+    
+  updateRegistrationStatus: (registrationId, statusData) =>
+    fetchApi(`/registrations/update-status/${registrationId}`, {
+      method: 'PUT',
+      body: JSON.stringify(statusData)
+    }),
 
 }
 // Export the raw fetchApi for custom calls

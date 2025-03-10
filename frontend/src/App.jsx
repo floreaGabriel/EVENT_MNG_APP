@@ -101,6 +101,11 @@ function App() {
               <ProtectedRoute user = {user}>
                 <OrganizerDashboard user={user}/>
               </ProtectedRoute>} />
+
+              <Route path="/event/:eventId/registrations" element={
+                  <ProtectedRoute user={user}>
+                    <EventRegistrations user={user} />
+                  </ProtectedRoute> } />
           </Routes>
 
 

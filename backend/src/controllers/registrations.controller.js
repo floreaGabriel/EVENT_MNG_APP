@@ -73,18 +73,58 @@ export const registerForEvent = async (req, res) => {
 
         const existingRegistration = await Registration.findOne({
             event: eventId,
-            user: userId
+            attendee: userId
         });
 
         // daca exista deja o inregistrare nu te mai poti inregistra
         if (existingRegistration) {
-            return res.status(400).json({
-                success: false,
-                message: 'You are already registered for this event'
-            });
+            
+            console.log("Exista deja inregistrarea...", existingRegistration);
+
+            if (existingRegistration.status === 'CANCELLED') {
+                existingRegistration.status = 'PENDING';
+                existingRegistration.paymentStatus = event.pricing.isFree ? 'PAID' : 'UNPAID';
+                existingRegistration.paymentMethod = event.pricing.isFree ? 'FREE' : undefined;
+                existingRegistration.quantity = quantity;
+                existingRegistration.totalPrice = totalPrice;
+                existingRegistration.ticketType = ticketType;
+
+                await existingRegistration.save();
+
+                if (selectedTicket.availableQuantity !== undefined) {
+                    selectedTicket.availableQuantity -= quantity;
+                    await event.save();
+                }
+
+
+                event.currentAttendees = (event.currentAttendees || 0) + quantity;
+                await event.save();
+
+                if (event.pricing.isFree) {
+                    existingRegistration.status = 'CONFIRMED';
+                    await existingRegistration.save();  
+                }
+
+
+                console.log("Inregistrarea a fost updatata...", existingRegistration);
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Registration successful',
+                    data: existingRegistration
+                });
+            } else {
+                return res.status(400).json({
+                    success: false,
+                    message: 'You are already registered for this event'
+                });
+            }
+
         }
 
         // atunci cream inregistrarea 
+
+        console.log("Cream inregistrarea...");
 
         const registration = new Registration({
             event: eventId,
@@ -200,8 +240,9 @@ export const cancelRegistration = async (req, res) => {
         // Update event's current attendees count
         const event = await Event.findById(registration.event);
         if (event) {
+
+            console.log("Current attendees: ", event.currentAttendees);
             event.currentAttendees = Math.max(0, (event.currentAttendees || 0) - registration.quantity);
-            
             console.log("Verific daca s-a sters in functia cancel...");
             console.log("current attendes: ", event.currentAttendees);
             // Return tickets to available pool if applicable
@@ -226,8 +267,6 @@ export const cancelRegistration = async (req, res) => {
         });
     }
 };
-
-// TO DO: AM RAMAS LA VERIFICARE DACA MERGE SA TE INREGISTREZI LA UN EVENIMENT
 
 export const checkRegistrationStatus = async (req, res) => {
     try {
@@ -264,3 +303,119 @@ export const checkRegistrationStatus = async (req, res) => {
         });
     }
 };
+
+export const getEventRegistrations = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const organizerId = req.user._id;
+
+
+        // verificam daca evenimentul exista si este al organizatorului curent
+        const event = await Event.findOne(eventId);
+        if (!event) {
+            return res.status(404).json({
+                success: false,
+                message: 'Event not found'
+            });
+        }
+
+
+        if (event.organizer.toString() !== organizerId.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'Unauthorized to view registrations for this event'
+            })
+        }
+
+        // preluam toate inregistrarile la eveniment
+
+        const registrations = await Registration.find({event: eventId})
+            .populate({
+                path: 'attendee',
+                select: 'username firstname lastname email avatar participantProfile'
+            })
+            .sort({createdAt: -1});
+        
+        res.status(200).json({
+            success: true,
+            count: registrations.length,
+            data: registrations
+            });
+    } catch (error) {
+        console.error('Error fetching event registrations:', error);
+        res.status(500).json({
+        success: false,
+        message: 'Failed to retrieve registrations',
+        error: error.message
+        });
+    }
+}
+
+export const updateRegistrationStatus = async (req, res) => {
+    try {
+        const {registrationId} = req.params;
+        const {status} = req.body; // poate fi CANCELLED sau CONFIRMED
+        const organizerId = req.user._id;
+
+        if (!['CONFIRMED', 'CANCELLED'].includes(status)) {
+            return res.status(400).json({
+              success: false,
+              message: 'Invalid status. Must be CONFIRMED or CANCELLED'
+            });
+          }
+      
+          // Find the registration
+          const registration = await Registration.findById(registrationId);
+          if (!registration) {
+            return res.status(404).json({
+              success: false,
+              message: 'Registration not found'
+            });
+          }
+      
+          // Verify the organizer owns this event
+          const event = await Event.findById(registration.event);
+          if (!event || event.organizer.toString() !== organizerId.toString()) {
+            return res.status(403).json({
+              success: false,
+              message: 'Unauthorized: You can only manage registrations for your own events'
+            });
+          }
+      
+          // Update the registration status
+          registration.status = status;
+          
+          // Handle ticket inventory and attendee count
+          if (status === 'CANCELLED' && registration.status !== 'CANCELLED') {
+            // If cancelling a previously confirmed registration
+            event.currentAttendees = Math.max(0, (event.currentAttendees || 0) - registration.quantity);
+            
+            // Return tickets to available pool
+            const ticketIndex = event.pricing.tickets.findIndex(t => t.type === registration.ticketType);
+            if (ticketIndex >= 0 && event.pricing.tickets[ticketIndex].availableQuantity !== undefined) {
+              event.pricing.tickets[ticketIndex].availableQuantity += registration.quantity;
+            }
+            
+            // Update payment status if paid
+            if (registration.paymentStatus === 'PAID') {
+              registration.paymentStatus = 'REFUNDED';
+            }
+          }
+          
+          await registration.save();
+          await event.save();
+      
+          res.status(200).json({
+            success: true,
+            message: `Registration ${status === 'CONFIRMED' ? 'approved' : 'rejected'} successfully`,
+            data: registration
+          });
+    } catch (error) {
+        console.error('Error updating registration status:', error);
+        res.status(500).json({
+        success: false,
+        message: 'Failed to update registration status',
+        error: error.message
+        });
+    }
+}
