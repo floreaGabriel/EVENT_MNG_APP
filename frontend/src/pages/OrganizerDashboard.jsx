@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { authApi } from "../services/api.service";
+import { authApi, eventsApi } from "../services/api.service";
 
 const OrganizerDashboard = (({user}) => {
     const [activeTab, setActiveTab] = useState('profile');
@@ -29,8 +29,122 @@ const OrganizerDashboard = (({user}) => {
           }
     });
 
+
+    const [events, setEvents] = useState([]);
+    const [eventsLoading, setEventsLoading] = useState(false);
+    const [eventsError, setEventsError] = useState('');
+    const [eventTab, setEventTab] = useState('upcoming');
+    const [filteredEvents, setFilteredEvents] = useState([]);
+
     const navigate = useNavigate();
 
+
+    const filterEventsByTab = (eventsToFilter, tab) => {
+      const now = new Date();
+      let filtered = [];
+      
+      switch(tab) {
+        case 'upcoming':
+          // Events with start date in the future and not in draft status
+          filtered = eventsToFilter.filter(event => 
+            new Date(event.dates.start) >= now && 
+            event.status !== 'DRAFT'
+          );
+          break;
+        case 'past':
+          // Events with end date in the past and not in draft status
+          filtered = eventsToFilter.filter(event => 
+            new Date(event.dates.end) < now && 
+            event.status !== 'DRAFT'
+          );
+          break;
+        case 'draft':
+          // Events with draft status regardless of date
+          filtered = eventsToFilter.filter(event => 
+            event.status === 'DRAFT'
+          );
+          break;
+        default:
+          filtered = eventsToFilter;
+      }
+      
+      return filtered;
+    };
+    
+    // Use a separate useEffect for filtering
+    useEffect(() => {
+      if (events.length > 0) {
+        const filtered = filterEventsByTab(events, eventTab);
+        setFilteredEvents(filtered);
+      }
+    }, [events, eventTab]);
+    // fetch pentru evenimente
+    useEffect(() => {
+      const fetchEvents = async () => {
+        if (activeTab !== 'events' || !user) return;
+
+        try {
+
+          console.log("incarcare evenimente organizator");
+          setEventsLoading(true);
+          const response = await eventsApi.getEvents();
+
+          // preluam doar evenimentele organizatorului
+          const organizerEvents = response.data.filter(
+            event => event.organizer._id === user._id
+          )
+
+          console.log("Evenimente: ", organizerEvents);
+
+          setEvents(organizerEvents);
+
+        } catch (error) {
+          console.error('Error fetching organizer events:', error);
+          setEventsError('Failed to load your events. Please try again.');
+        } finally {
+          setEventsLoading(false);
+        }
+      }
+
+
+      fetchEvents();
+    }, [activeTab, user]);
+
+
+    const handlePublishEvent = async (eventId) => {
+      try {
+        // Find the event in the list
+        const eventToUpdate = events.find(e => e._id === eventId);
+        if (!eventToUpdate) return;
+        
+        // Update the event status to PUBLISHED
+        const updatedEventData = {
+          ...eventToUpdate,
+          status: 'PUBLISHED'
+        };
+        
+        await eventsApi.updateEvent(eventId, updatedEventData);
+        
+        // Update local state to reflect the change
+        const updatedEvents = events.map(event => 
+          event._id === eventId 
+            ? { ...event, status: 'PUBLISHED' } 
+            : event
+        );
+        
+        setEvents(updatedEvents);
+        // Re-filter to update the current tab view
+        filterEventsByTab(updatedEvents, eventTab);
+        
+        // Show success message if you have that functionality
+        setSuccess('Event published successfully!');
+      } catch (error) {
+        console.error('Error publishing event:', error);
+        setError('Failed to publish event. Please try again.');
+      }
+    };
+    
+    // use effect daca userul nu este logat
     useEffect(() => {
         // If no user is logged in, redirect to login
         if (!user) {
@@ -615,64 +729,135 @@ const OrganizerDashboard = (({user}) => {
   
                 {/* Events Tab */}
                 {activeTab === 'events' && (
-                              <div className="p-6">
-                                <h2 className="text-xl font-semibold text-gray-900 mb-6">My Events</h2>
-                                
-                                {/* Tabs for different event lists */}
-                                <div className="border-b border-gray-200 mb-6">
-                                  <nav className="-mb-px flex space-x-6">
-                                    <a href="#" className="border-blue-500 text-blue-600 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
-                                      Upcoming Events
-                                    </a>
-                                    <a href="#" className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
-                                      Past Events
-                                    </a>
-                                    <a href="#" className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
-                                      Saved Events
-                                    </a>
-                                  </nav>
-                                </div>
-                              </div>
-                        )};
-                          <div className="space-y-4">
-                          {/* This would usually come from an API call, but for now we'll simulate some events */}
-                          {[
-                            { _id: '1', title: 'Music Festival', date: '2025-04-15', registrationCount: 28 },
-                            { _id: '2', title: 'Tech Conference', date: '2025-05-20', registrationCount: 45 },
-                            { _id: '3', title: 'Art Exhibition', date: '2025-06-10', registrationCount: 12 }
-                          ].map(event => (
-                            <div key={event._id} className="bg-white border rounded-lg shadow-sm p-4">
-                              <div className="flex justify-between items-center">
-                                <div>
-                                  <h3 className="font-semibold text-lg text-gray-900">{event.title}</h3>
-                                  <p className="text-gray-600">{new Date(event.date).toLocaleDateString()}</p>
-                                </div>
-                                <div className="flex space-x-2">
-                                  <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                                    {event.registrationCount} Registrations
-                                  </span>
-                                  <Link 
-                                    to={`/event/${event._id}/registrations`}
-                                    className="inline-flex items-center px-3 py-1 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50"
-                                  >
-                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                    </svg>
-                                    Manage Registrations
-                                  </Link>
-                                  <Link 
-                                    to={`/events/${event._id}`}
-                                    className="inline-flex items-center px-3 py-1 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
-                                  >
-                                    View Event
-                                  </Link>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                <div className="p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">My Events</h2>
                 
-
+                {/* Tabs for different event lists */}
+                <div className="border-b border-gray-200 mb-6">
+                  <nav className="-mb-px flex space-x-6">
+                  <button
+                    type="button"
+                    onClick={() => setEventTab('upcoming')}
+                    className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm focus:outline-none ${
+                      eventTab === 'upcoming' 
+                        ? 'border-blue-500 text-blue-600' 
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    Upcoming Events
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEventTab('past')}
+                    className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm focus:outline-none ${
+                      eventTab === 'past' 
+                        ? 'border-blue-500 text-blue-600' 
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    Past Events
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEventTab('draft')}
+                    className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm focus:outline-none ${
+                      eventTab === 'draft' 
+                        ? 'border-blue-500 text-blue-600' 
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    Draft Events
+                  </button>
+                </nav>
+                </div>
+                
+                {eventsLoading ? (
+                  <div className="flex justify-center py-10">
+                    <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+                  </div>
+                ) : eventsError ? (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+                    {eventsError}
+                  </div>
+                ) : events.length === 0 ? (
+                  <div className="text-center py-10">
+                    <p className="text-gray-500 mb-4">You haven't created any events yet.</p>
+                    <Link 
+                      to="/create-event"
+                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
+                      </svg>
+                      Create Your First Event
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredEvents.map(event => (
+                      <div key={event._id} className="bg-white border rounded-lg shadow-sm p-4">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h3 className="font-semibold text-lg text-gray-900">{event.title}</h3>
+                            <p className="text-gray-600">{new Date(event.dates.start).toLocaleDateString()}</p>
+                            <span className="inline-block mt-1 bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                              {event.status}
+                            </span>
+                          </div>
+                          <div className="flex space-x-2">
+                            <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                              {event.currentAttendees || 0} Registrations
+                            </span>
+                            {event.status === 'DRAFT' ? (
+                              // Actions for draft events
+                              <button
+                                onClick={() => handlePublishEvent(event._id)}
+                                className="inline-flex items-center px-3 py-1 border border-green-600 text-green-600 rounded-md hover:bg-green-50"
+                              >
+                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Publish
+                              </button>
+                            ) : (
+                              // Actions for published events
+                              <Link 
+                                to={`/event/${event._id}/registrations`}
+                                className="inline-flex items-center px-3 py-1 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50"
+                              >
+                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                </svg>
+                                Manage Registrations
+                              </Link>
+                            )}
+                            <Link 
+                              to={`/events/${event._id}`}
+                              className="inline-flex items-center px-3 py-1 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                            >
+                              View Event
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {!eventsLoading && events.length > 0 && (
+                <div className="mt-6 text-center">
+                        <Link 
+                          to="/create-event"
+                          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
+                          </svg>
+                          Create New Event
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                )}
                 {/* Subscription Tab */}
                 {activeTab === 'subscription' && (
                     <div className="p-6">
@@ -797,6 +982,7 @@ const OrganizerDashboard = (({user}) => {
             </div>
           </div>
           </div>
+          
         </div>
     );
 });

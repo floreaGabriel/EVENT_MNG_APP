@@ -12,6 +12,7 @@ export const getEvents = async (req, res) => {
             startDate,
             endDate,
             search,
+            status,
             isFree,
             page = 1,
             limit = 10
@@ -19,8 +20,9 @@ export const getEvents = async (req, res) => {
 
         // construim filtrul
 
-        const filter = {/*status: 'PUBLISHED',*/ visibility: 'PUBLIC'};
+        const filter = {visibility: 'PUBLIC' };
 
+        if (status) filter.status = status;
         if (category) filter.category = category;
         if (city) filter['location.city'] = { $regex: city, $options: 'i'};
         if (isFree) filter['pricing.isFree'] = isFree === 'true';
@@ -83,7 +85,7 @@ export const createEvent = async (req, res) => {
 
     try {
 
-        console.log("Create event func: ", req);
+        console.log("Create event func: ");
 
 
         const userId = req.user._id; // extragem utilizatorul 
@@ -97,12 +99,16 @@ export const createEvent = async (req, res) => {
               });
         }
 
+        
         // extragem datele evenimentului
 
         const eventData = req.body;
         eventData.organizer = userId;
 
+        console.log("EventData: ", eventData);
+
         if (eventData.coverImageBase64) {
+            console.log("Am gasit imagine in crearea evenimentului...");
             const uploadResult = await cloudinary.uploader.upload(eventData.coverImageBase64, {
                 folder: 'events'
             });
@@ -120,6 +126,7 @@ export const createEvent = async (req, res) => {
         const newEvent = new Event(eventData);
         await newEvent.save();
 
+        console.log("Event creat: ", newEvent);
         // actualizam organizatorul
 
         await User.findByIdAndUpdate(userId, {
@@ -175,9 +182,7 @@ export const updateEvent = async (req, res) => {
         console.log("Id event: ", eventId);
         //console.log("User id: " , userId);
 
-        
-
-
+    
         const event = await Event.findById(eventId);
         if (!event) {
             return res.status(404).json({ 
@@ -200,7 +205,7 @@ export const updateEvent = async (req, res) => {
         }
 
         const updatedData = req.body;
-
+        console.log("updated data: ",updatedData);
         if (updatedData.coverImageBase64) {
             const uploadResult = await cloudinary.uploader.upload(updatedData.coverImageBase64, {
                 folder: 'events'
@@ -212,13 +217,14 @@ export const updateEvent = async (req, res) => {
             delete updatedData.coverImageBase64;
         }
 
+        console.log("se face update la event");
         // new: true -> returneaza noul obiect modificat, nu cel original
         const updatedEvent = await Event.findByIdAndUpdate(
             eventId,
             updatedData,
-            { new: true, runValidators: true}
+            { new: true}
         );
-
+        console.log("s-a facut update la event");
         res.status(200).json({ 
             success: true, 
             message: 'Event updated successfully', 

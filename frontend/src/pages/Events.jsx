@@ -24,14 +24,18 @@ const Events = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
+
+        const today = new Date().toISOString().split('T')[0];
+
         // pregatim parametrii pentru api
         const params = {
           search: searchTerm || undefined,
           category: filters.category || undefined,
           city: filters.location || undefined,
-          startDate: filters.date || undefined,
+          startDate: filters.date || today,
           page: pagination.currentPage,
-          limit: 6
+          limit: 6,
+          status: 'PUBLISHED'
         };
 
         const data = await eventsApi.getEvents(params);

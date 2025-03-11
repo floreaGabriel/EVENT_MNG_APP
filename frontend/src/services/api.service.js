@@ -22,8 +22,11 @@ const fetchApi = async (endpoint, options = {}) => {
   };
 
   try {
+    //console.log("fetchApi", `${API_BASE_URL}${endpoint}`, fetchOptions);
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
     
+    //console.log("response", response);
     // Check if the response is JSON
     const contentType = response.headers.get('content-type');
     const isJson = contentType && contentType.includes('application/json');

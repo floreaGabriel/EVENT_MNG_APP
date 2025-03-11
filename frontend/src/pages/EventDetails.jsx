@@ -515,11 +515,13 @@ const EventDetails = ({ user }) => {
               
               {/* Registration Button */}
               {registrationSuccess ? (
-                <div className="mb-4 p-4 border border-green-200 rounded-md bg-green-50">
-                  <p className="text-green-700 font-medium text-center">
-                    {registrationStatus === 'CONFIRMED' ? 
-                      'You are registered for this event!' : 
-                      registrationStatus === 'CANCELLED' ? 
+                <div className="mb-4 p-4 border border-blue-200 rounded-md bg-green-50">
+                  <p className="text-green-500 font-medium text-center">
+                    {registrationStatus === 'CONFIRMED' &&
+                      'You are registered for this event.' }
+                  </p>
+                  <p className="text-red-500 font-medium text-center">
+                    {registrationStatus === 'CANCELLED' ? 
                       'Your registration has been cancelled.' :
                       'Your registration is pending.'}
                   </p>
