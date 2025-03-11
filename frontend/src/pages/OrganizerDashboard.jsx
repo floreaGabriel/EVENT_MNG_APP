@@ -633,8 +633,45 @@ const OrganizerDashboard = (({user}) => {
                                   </nav>
                                 </div>
                               </div>
-
-                )};
+                        )};
+                          <div className="space-y-4">
+                          {/* This would usually come from an API call, but for now we'll simulate some events */}
+                          {[
+                            { _id: '1', title: 'Music Festival', date: '2025-04-15', registrationCount: 28 },
+                            { _id: '2', title: 'Tech Conference', date: '2025-05-20', registrationCount: 45 },
+                            { _id: '3', title: 'Art Exhibition', date: '2025-06-10', registrationCount: 12 }
+                          ].map(event => (
+                            <div key={event._id} className="bg-white border rounded-lg shadow-sm p-4">
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <h3 className="font-semibold text-lg text-gray-900">{event.title}</h3>
+                                  <p className="text-gray-600">{new Date(event.date).toLocaleDateString()}</p>
+                                </div>
+                                <div className="flex space-x-2">
+                                  <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                                    {event.registrationCount} Registrations
+                                  </span>
+                                  <Link 
+                                    to={`/event/${event._id}/registrations`}
+                                    className="inline-flex items-center px-3 py-1 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50"
+                                  >
+                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                    </svg>
+                                    Manage Registrations
+                                  </Link>
+                                  <Link 
+                                    to={`/events/${event._id}`}
+                                    className="inline-flex items-center px-3 py-1 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                                  >
+                                    View Event
+                                  </Link>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                
 
                 {/* Subscription Tab */}
                 {activeTab === 'subscription' && (

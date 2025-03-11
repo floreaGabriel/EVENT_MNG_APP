@@ -13,7 +13,7 @@ import EventDetails from './pages/EventDetails'
 import Register from './pages/Register'
 import ParticipantDashboard from './pages/ParticipantDashboard'
 import OrganizerDashboard from './pages/OrganizerDashboard'
-
+import EventRegistrations from './pages/EventRegistrations'
 
 function App() {
   const [user, setUser] = useState(null);

@@ -309,9 +309,9 @@ export const getEventRegistrations = async (req, res) => {
         const { eventId } = req.params;
         const organizerId = req.user._id;
 
-
+        console.log("Get event registrations...");
         // verificam daca evenimentul exista si este al organizatorului curent
-        const event = await Event.findOne(eventId);
+        const event = await Event.findById(eventId);
         if (!event) {
             return res.status(404).json({
                 success: false,
@@ -321,6 +321,10 @@ export const getEventRegistrations = async (req, res) => {
 
 
         if (event.organizer.toString() !== organizerId.toString()) {
+
+            console.log("event org:", event.organizer.toString());
+            console.log("id event org:", organizerId.toString());
+
             return res.status(403).json({
                 success: false,
                 message: 'Unauthorized to view registrations for this event'
@@ -336,6 +340,9 @@ export const getEventRegistrations = async (req, res) => {
             })
             .sort({createdAt: -1});
         
+
+        console.log("Registrations: ", registrations);
+
         res.status(200).json({
             success: true,
             count: registrations.length,
@@ -353,11 +360,17 @@ export const getEventRegistrations = async (req, res) => {
 
 export const updateRegistrationStatus = async (req, res) => {
     try {
+
+
+        console.log("Update registration...");
+
         const {registrationId} = req.params;
         const {status} = req.body; // poate fi CANCELLED sau CONFIRMED
         const organizerId = req.user._id;
+        //console.log("Status: ", status);    
 
         if (!['CONFIRMED', 'CANCELLED'].includes(status)) {
+            console.log("Invalid status...", status);
             return res.status(400).json({
               success: false,
               message: 'Invalid status. Must be CONFIRMED or CANCELLED'
@@ -373,8 +386,12 @@ export const updateRegistrationStatus = async (req, res) => {
             });
           }
       
+        //console.log("event id: ", registration.event);
+        
           // Verify the organizer owns this event
           const event = await Event.findById(registration.event);
+          //console.log("event organizer id: ", event.organizer.toString());
+        //console.log("organizer id: ", organizerId.toString());
           if (!event || event.organizer.toString() !== organizerId.toString()) {
             return res.status(403).json({
               success: false,
@@ -382,8 +399,12 @@ export const updateRegistrationStatus = async (req, res) => {
             });
           }
       
+          //console.log("Status inainte: ", registration.status);
+
           // Update the registration status
           registration.status = status;
+
+          //console.log("Status dupa: ", registration.status);
           
           // Handle ticket inventory and attendee count
           if (status === 'CANCELLED' && registration.status !== 'CANCELLED') {
