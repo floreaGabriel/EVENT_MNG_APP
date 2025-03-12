@@ -113,10 +113,18 @@ const EventDetails = ({ user }) => {
 
     console.log("HANDLE REGISTER...");
     console.log("User incearca sa se inregistreze: ", user);
+
+    if (event.organizer._id === user._id) {
+      alert("You are the organizer, you cannot register for this event");
+      return;
+    }
+    
     if (!user) {
       setShowLoginModal(true);
       return;
     }
+
+
 
     if (registrationStatus && registrationStatus !== 'CANCELLED') {
       setRegistrationSuccess(true);
@@ -438,6 +446,7 @@ const EventDetails = ({ user }) => {
             </div>
 
             {/* Organizer Information */}
+            {event.organizer._id !== user?._id && (
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Organizer</h2>
               <div className="flex items-center">
@@ -473,8 +482,10 @@ const EventDetails = ({ user }) => {
                 </div>
               </div>
             </div>
-          </div>
+            )}
 
+          </div>
+            
           {/* Right Column - Registration Card */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-md p-6 sticky top-20">
@@ -553,6 +564,7 @@ const EventDetails = ({ user }) => {
               </div>
               
               {/* Registration Button */}
+              
               {registrationSuccess ? (
                 <div className="mb-4 p-4 border border-blue-200 rounded-md bg-green-50">
                   <p className="text-green-500 font-medium text-center">

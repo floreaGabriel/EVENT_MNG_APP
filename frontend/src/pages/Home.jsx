@@ -79,7 +79,7 @@ const Home = () => {
                 <div key={event._id} className="group relative bg-white rounded-lg shadow-md overflow-hidden">
                   <div className="relative h-48 overflow-hidden">
                     <img 
-                      src={event.media?.coverImage || 'https://res.cloudinary.com/duairwgys/image/upload/v1740905113/samples/animals/kitten-playing.gif'} 
+                      src={event.media?.coverImage}
                       alt={event.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 ease-in-out"
                     />
