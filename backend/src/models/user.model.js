@@ -17,6 +17,16 @@ const userSchema = new mongoose.Schema({
     status: { type: String, enum: ['ACTIVE', 'INACTIVE', 'SUSPENDED'], default: 'ACTIVE' },
     avatar: String,
 
+    // pentru email
+    isVerified:{
+        type: Boolean,
+        default: false
+    },
+    verificationToken: String,
+    verificationTokenExpires: Date,
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
+
     participantProfile: {
         preferences: {
             eventTypes: [String],
