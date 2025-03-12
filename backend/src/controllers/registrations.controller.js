@@ -148,9 +148,6 @@ export const registerForEvent = async (req, res) => {
         event.currentAttendees = (event.currentAttendees || 0) + quantity;
         await event.save();
 
-        await User.findByIdAndUpdate(userId, {
-            $addToSet: { 'participantProfile.savedEvents': eventId }
-        });
 
         if (event.pricing.isFree) {
             registration.status = 'CONFIRMED';
@@ -180,9 +177,11 @@ export const registerForEvent = async (req, res) => {
 export const getUserRegistrations = async (req, res) => {
 
     try {
+        console.log("Get user registrations function ...");
+
         const userId = req.user._id;
 
-        const registrations = new Registration.find({attendee: userId})
+        const registrations = await Registration.find({attendee: userId})
             .populate({
                 path: 'event',
                 select: 'title dates location media category status'
@@ -436,6 +435,49 @@ export const updateRegistrationStatus = async (req, res) => {
         res.status(500).json({
         success: false,
         message: 'Failed to update registration status',
+        error: error.message
+        });
+    }
+}
+
+export const getSavedEventsByIds = async (req, res) => {
+
+    try {
+        const userId = req.user._id;
+
+        const user = await User.findById(userId).select('participantProfile.savedEvents');
+
+        if (!user || !user.participantProfile || !user.participantProfile.savedEvents) {
+            return res.status(200).json({
+                success: true,
+                data: []
+            });
+        }
+
+        const savedEventsIds = user.participantProfile.savedEvents;
+        if (savedEventsIds.length == 0) {
+            // inseamna ca nu are salavate evenimente
+            return res.status(200).json({
+                success: true,
+                data: []
+            });
+        }
+
+        const events = await Event.find({
+            _id: {$in: savedEventsIds}
+        }).select('title dates description shortDescription location media category status organizer');
+
+
+        res.status(200).json({
+            success: true,
+            data: events
+          });
+
+    } catch (error) {
+        console.error('Error in getSavedEvents:', error);
+        res.status(500).json({
+        success: false,
+        message: 'Failed to fetch saved events',
         error: error.message
         });
     }

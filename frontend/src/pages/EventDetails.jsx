@@ -67,7 +67,46 @@ const EventDetails = ({ user }) => {
     checkRegistrationStatus();
   }, [id, user, event]);
 
+  // verificam daca evenimentul este salvat
+  const [isSaved, setIsSaved] = useState(false);
+  const [savingEvent, setSavingEvent] = useState(false);
 
+  useEffect(() => {
+    const checkIfEventSaved = async () => {
+      if (!user) return;
+      
+      try {
+        const response = await eventsApi.checkSavedEvent(id);
+        if (response.success) {
+          setIsSaved(response.isSaved);
+        }
+      } catch (error) {
+        console.error('Error checking if event is saved:', error);
+      }
+    };
+    
+    checkIfEventSaved();
+  }, [id, user]);
+
+  // functie pentru salvare eveniment
+  const handleToggleSave = async () => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+    
+    try {
+      setSavingEvent(true);
+      const response = await eventsApi.toggleSaveEvent(id);
+      if (response.success) {
+        setIsSaved(response.isSaved);
+      }
+    } catch (error) {
+      console.error('Error toggling event save:', error);
+    } finally {
+      setSavingEvent(false);
+    }
+  };
   // Function to handle event registration
   const handleRegister = async () => {
     // Check if user is logged in
@@ -587,6 +626,49 @@ const EventDetails = ({ user }) => {
                 </p>
               )}
               
+              
+
+              {/* Save Button */}
+              {user && (
+                <button
+                  onClick={handleToggleSave}
+                  disabled={savingEvent}
+                  className={`mt-3 w-full flex items-center justify-center py-2 px-4 border rounded-md font-medium text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                    isSaved 
+                      ? 'bg-yellow-50 text-yellow-700 border-yellow-300 hover:bg-yellow-100' 
+                      : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {savingEvent ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing...
+                    </span>
+                  ) : (
+                    <>
+                      <svg 
+                        className={`h-5 w-5 mr-2 ${isSaved ? 'text-yellow-500' : 'text-gray-400'}`} 
+                        fill={isSaved ? 'currentColor' : 'none'}
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24" 
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth="2" 
+                          d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                        ></path>
+                      </svg>
+                      {isSaved ? 'Saved to Your Events' : 'Save to Your Events'}
+                    </>
+                  )}
+                </button>
+              )}
+
               {/* Share Buttons */}
               <div className="mt-6 pt-4 border-t border-gray-200">
                 <p className="text-sm font-medium text-gray-700 mb-3">Share this event</p>

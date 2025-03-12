@@ -115,6 +115,14 @@ export const eventsApi = {
       method: 'PUT',
       body: JSON.stringify(eventData),
     }),
+
+    toggleSaveEvent: (eventId) =>
+      fetchApi(`/events/save/${eventId}`, {
+        method: 'POST',
+      }),
+    
+    checkSavedEvent: (eventId) =>
+      fetchApi(`/events/saved/${eventId}`),
 };
 
 
@@ -145,6 +153,9 @@ export const registrationsApi = {
       method: 'PUT',
       body: JSON.stringify(statusData)
     }),
+
+  getSavedEvents: () =>
+    fetchApi(`/registrations/saved-events`),
 
 }
 // Export the raw fetchApi for custom calls

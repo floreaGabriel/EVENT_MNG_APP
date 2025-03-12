@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom";
 import { authApi } from "../services/api.service";
-
+import { registrationsApi } from "../services/api.service";
 
 
 const ParticipantDashboard = (({user}) => {
@@ -50,6 +50,57 @@ const ParticipantDashboard = (({user}) => {
           navigate('/login?message=Please log in to view your profile');
         }
     }, [user, navigate]);
+
+
+    const [userRegistrations, setUserRegistrations] = useState([]);
+    const [registrationsLoading, setRegistrationsLoading] = useState(false);
+    const [activeEventTab, setActiveEventTab] = useState('upcoming');
+
+    useEffect(() => {
+      const fetchUserRegistrations = async () => {
+        if (activeTab === 'events') {
+          try {
+            setRegistrationsLoading(true);
+            const response = await registrationsApi.getUserRegistration();
+            if (response && response.data) {
+              setUserRegistrations(response.data);
+            }
+          } catch (error) {
+            console.error('Error fetching user registrations:', error);
+          } finally {
+            setRegistrationsLoading(false);
+          }
+        }
+      };
+    
+      fetchUserRegistrations();
+    }, [activeTab]);
+
+    // saved events tab
+    const [savedEvents, setSavedEvents] = useState([]);
+    const [savedEventsLoading, setSavedEventsLoading] = useState(false);
+
+
+    useEffect(() => {
+      const fetchSavedEvents = async () => {
+        if (activeTab === 'events' && activeEventTab === 'saved') {
+          try {
+            setSavedEventsLoading(true);
+            const response = await registrationsApi.getSavedEvents();
+            if (response && response.data) {
+              setSavedEvents(response.data);
+            }
+          } catch (error) {
+            console.error('Error fetching saved events:', error);
+          } finally {
+            setSavedEventsLoading(false);
+          }
+        }
+      };
+    
+      fetchSavedEvents();
+    }, [activeTab, activeEventTab]);
+
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -676,26 +727,183 @@ const ParticipantDashboard = (({user}) => {
                             
                             {/* My Events Tab */}
                             {activeTab === 'events' && (
-                              <div className="p-6">
-                                <h2 className="text-xl font-semibold text-gray-900 mb-6">My Events</h2>
-                                
-                                {/* Tabs for different event lists */}
-                                <div className="border-b border-gray-200 mb-6">
-                                  <nav className="-mb-px flex space-x-6">
-                                    <a href="#" className="border-blue-500 text-blue-600 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
-                                      Upcoming Events
-                                    </a>
-                                    <a href="#" className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
-                                      Past Events
-                                    </a>
-                                    <a href="#" className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
-                                      Saved Events
-                                    </a>
-                                  </nav>
-                                </div>
+                            <div className="p-6">
+                              <h2 className="text-xl font-semibold text-gray-900 mb-6">My Events</h2>
+                              
+                              {/* Tabs for different event lists */}
+                              <div className="border-b border-gray-200 mb-6">
+                                <nav className="-mb-px flex space-x-6">
+                                  <button
+                                    onClick={() => setActiveEventTab('upcoming')}
+                                    className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
+                                      activeEventTab === 'upcoming' 
+                                        ? 'border-blue-500 text-blue-600' 
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    }`}
+                                  >
+                                    Upcoming Events
+                                  </button>
+                                  <button
+                                    onClick={() => setActiveEventTab('past')}
+                                    className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
+                                      activeEventTab === 'past' 
+                                        ? 'border-blue-500 text-blue-600' 
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    }`}
+                                  >
+                                    Past Events
+                                  </button>
+                                  <button
+                                    onClick={() => setActiveEventTab('saved')}
+                                    className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
+                                      activeEventTab === 'saved' 
+                                        ? 'border-blue-500 text-blue-600' 
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    }`}
+                                  >
+                                    Saved Events
+                                  </button>
+                                </nav>
                               </div>
 
-                              )};
+                              {/* Registration list */}
+                              {registrationsLoading ? (
+                                <div className="flex justify-center py-10">
+                                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+                                </div>
+                              ) : userRegistrations.length === 0  && activeEventTab !== 'saved' ? (
+                                <div className="text-center py-10">
+                                  <p className="text-gray-500">You haven't registered for any events yet.</p>
+                                  <Link 
+                                    to="/events" 
+                                    className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                  >
+                                    Browse Events
+                                  </Link>
+                                </div>
+                              ) : (
+                                <div className="space-y-4">
+                                  {userRegistrations
+                                    .filter(registration => {
+                                      const eventDate = new Date(registration.event?.dates?.start);
+                                      const now = new Date();
+                                      
+                                      if (activeEventTab === 'upcoming') {
+                                        return eventDate >= now;
+                                      } else if (activeEventTab === 'past') {
+                                        return eventDate < now;
+                                      } else if (activeEventTab === 'saved') {
+                                        return null;
+                                      }
+                                      
+                                       // For saved tab, show all
+                                    })
+                                    .map(registration => (
+                                      <div key={registration._id} className="bg-white border rounded-lg shadow-sm p-4">
+                                        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                                          <div className="mb-4 md:mb-0">
+                                            <h3 className="font-semibold text-lg text-gray-900">{registration.event?.title}</h3>
+                                            <div className="flex flex-col sm:flex-row sm:space-x-4 text-sm text-gray-600">
+                                              <span className="flex items-center">
+                                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                </svg>
+                                                {new Date(registration.event?.dates?.start).toLocaleDateString()}
+                                              </span>
+                                              <span className="flex items-center mt-1 sm:mt-0">
+                                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                </svg>
+                                                {registration.event?.location?.city}, {registration.event?.location?.country}
+                                              </span>
+                                            </div>
+                                          </div>
+                                          <div className="flex flex-wrap gap-2">
+                                            <span className={`px-2 py-1 text-xs font-medium rounded-full
+                                              ${registration.status === 'CONFIRMED' ? 'bg-green-100 text-green-800' : 
+                                                registration.status === 'CANCELLED' ? 'bg-red-100 text-red-800' : 
+                                                'bg-yellow-100 text-yellow-800'}`}
+                                            >
+                                              {registration.status}
+                                            </span>
+                                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                                              {registration.ticketType}
+                                            </span>
+                                            <Link 
+                                              to={`/events/${registration.event?._id}`}
+                                              className="px-3 py-1 text-xs font-medium rounded-md bg-white border border-blue-600 text-blue-600 hover:bg-blue-50"
+                                            >
+                                              View Event
+                                            </Link>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))
+                                  }
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+
+                            {activeEventTab === 'saved' && (
+                              <div className="space-y-4 p-6">
+                                {savedEventsLoading ? (
+                                  <div className="flex justify-center py-10">
+                                    <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+                                  </div>
+                                ) : savedEvents.length === 0 ? (
+                                  <div className="text-center py-10">
+                                    <p className="text-gray-500">You haven't saved any events yet.</p>
+                                    <Link 
+                                      to="/events" 
+                                      className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                    >
+                                      Browse Events
+                                    </Link>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-4">
+                                    {savedEvents.map(event => (
+                                      <div key={event._id} className="bg-white border rounded-lg shadow-sm p-4">
+                                        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                                          <div className="mb-4 md:mb-0">
+                                            <h3 className="font-semibold text-lg text-gray-900">{event.title}</h3>
+                                            <div className="flex flex-col sm:flex-row sm:space-x-4 text-sm text-gray-600">
+                                              <span className="flex items-center">
+                                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                </svg>
+                                                {new Date(event.dates?.start).toLocaleDateString()}
+                                              </span>
+                                              <span className="flex items-center mt-1 sm:mt-0">
+                                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                </svg>
+                                                {event.location?.city}, {event.location?.country}
+                                              </span>
+                                            </div>
+                                          </div>
+                                          <div className="flex flex-wrap gap-2">
+                                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                                              {event.category}
+                                            </span>
+                                            <Link 
+                                              to={`/events/${event._id}`}
+                                              className="px-3 py-1 text-xs font-medium rounded-md bg-white border border-blue-600 text-blue-600 hover:bg-blue-50"
+                                            >
+                                              View Event
+                                            </Link>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                           </div>
                       </div>

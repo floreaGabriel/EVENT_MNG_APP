@@ -240,3 +240,101 @@ export const updateEvent = async (req, res) => {
         });
     }
 }
+
+
+export const toggleSaveEvent = async (req, res) => {
+    try {
+      const userId = req.user._id;
+      const { eventId } = req.params;
+      
+      // Find the user
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+      
+      // Check if event exists
+      const event = await Event.findById(eventId);
+      if (!event) {
+        return res.status(404).json({
+          success: false,
+          message: 'Event not found'
+        });
+      }
+      
+      // Initialize participantProfile if it doesn't exist
+      if (!user.participantProfile) {
+        user.participantProfile = {};
+      }
+      
+      // Initialize savedEvents array if it doesn't exist
+      if (!user.participantProfile.savedEvents) {
+        user.participantProfile.savedEvents = [];
+      }
+      
+      // Check if event is already saved
+      const eventIndex = user.participantProfile.savedEvents.indexOf(eventId);
+      let isSaved = false;
+      
+      if (eventIndex === -1) {
+        // Event not saved, so save it
+        user.participantProfile.savedEvents.push(eventId);
+        isSaved = true;
+      } else {
+        // Event already saved, so unsave it
+        user.participantProfile.savedEvents.splice(eventIndex, 1);
+        isSaved = false;
+      }
+      
+      await user.save();
+      
+      res.status(200).json({
+        success: true,
+        isSaved,
+        message: isSaved ? 'Event saved successfully' : 'Event unsaved successfully'
+      });
+    } catch (error) {
+      console.error('Error in toggleSaveEvent:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to save/unsave event',
+        error: error.message
+      });
+    }
+};
+
+
+  // Add this function to your backend/src/controllers/events.controller.js file
+
+export const checkSavedEvent = async (req, res) => {
+    try {
+      const userId = req.user._id;
+      const { eventId } = req.params;
+      
+      // Find the user with only savedEvents field
+      const user = await User.findById(userId).select('participantProfile.savedEvents');
+      
+      let isSaved = false;
+      
+      // Check if user has participant profile and saved events
+      if (user && user.participantProfile && user.participantProfile.savedEvents) {
+        // Check if the event is in the savedEvents array
+        isSaved = user.participantProfile.savedEvents.includes(eventId);
+      }
+      
+      res.status(200).json({
+        success: true,
+        isSaved
+      });
+    } catch (error) {
+      console.error('Error in checkSavedEvent:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to check if event is saved',
+        error: error.message
+      });
+    }
+};
