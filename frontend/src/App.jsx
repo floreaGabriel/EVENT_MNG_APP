@@ -14,6 +14,8 @@ import Register from './pages/Register'
 import ParticipantDashboard from './pages/ParticipantDashboard'
 import OrganizerDashboard from './pages/OrganizerDashboard'
 import EventRegistrations from './pages/EventRegistrations'
+import ForgotPassword from './pages/ForgotPassword'
+import VerifyEmail from './pages/VerifyEmail'
 
 function App() {
   const [user, setUser] = useState(null);
@@ -77,6 +79,9 @@ function App() {
             <Route path="/events" element={<Events />} />
             <Route path="/events/:id" element={<EventDetails user={user} />} />
             <Route path="/register" element={<Register setUser={setUser} />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            
             {/* 
             <Route path="/events/:id" element={<EventDetails />} />
             <Route path="/categories" element={<Categories />} />

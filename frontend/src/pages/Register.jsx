@@ -131,10 +131,7 @@ const Register = ({ setUser }) => {
         // Update user state in the app
         setUser(data.data);
 
-        // Redirect to home page or the page they were trying to access
-        const params = new URLSearchParams(location.search);
-        const redirectTo = params.get("redirect") || "/";
-        navigate(redirectTo);
+        navigate(`/verify-email?id=${data.data._id}`);
       } else {
         throw new Error(data.message || "Registration failed");
       }

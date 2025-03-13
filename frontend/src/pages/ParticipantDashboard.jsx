@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate } from "react-router-dom";
 import { authApi } from "../services/api.service";
 import { registrationsApi } from "../services/api.service";
@@ -52,6 +52,7 @@ const ParticipantDashboard = (({user}) => {
     }, [user, navigate]);
 
 
+    // pentru evenimente, fetch events function
     const [userRegistrations, setUserRegistrations] = useState([]);
     const [registrationsLoading, setRegistrationsLoading] = useState(false);
     const [activeEventTab, setActiveEventTab] = useState('upcoming');
@@ -102,6 +103,244 @@ const ParticipantDashboard = (({user}) => {
     }, [activeTab, activeEventTab]);
 
 
+
+    // pentru parola, schimbare de parola 
+
+    const [passwordData, setPasswordData] = useState({
+      email: user?.email || '',
+      token: '',
+      newPassword: '',
+      confirmPassword: ''
+    });
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [passwordError, setPasswordError] = useState('');
+    const [passwordSuccess, setPasswordSuccess] = useState('');
+    const [changingPassword, setChangingPassword] = useState(false);
+    const [step, setStep] = useState(1); // 1: Request token, 2: Set new password
+
+    const handleRequestPasswordReset = async (e) => {
+      e.preventDefault();
+      
+      setChangingPassword(true);
+      setPasswordError('');
+      setPasswordSuccess('');
+      
+      try {
+        await authApi.sendResetEmailToken(passwordData.email);
+        setPasswordSuccess('Password reset token has been sent to your email');
+        setStep(2);
+      } catch (error) {
+        setPasswordError(error.message || 'Failed to send reset token. Please try again.');
+      } finally {
+        setChangingPassword(false);
+      }
+    };
+    
+    const handleResetPassword = async (e) => {
+      e.preventDefault();
+      
+      if (passwordData.newPassword.length < 8) {
+        setPasswordError('New password must be at least 8 characters long');
+        return;
+      }
+      
+      if (passwordData.newPassword !== passwordData.confirmPassword) {
+        setPasswordError('Passwords do not match');
+        return;
+      }
+      
+      setChangingPassword(true);
+      setPasswordError('');
+      setPasswordSuccess('');
+      
+      try {
+        await authApi.resetPassword(
+          passwordData.email,
+          passwordData.token,
+          passwordData.newPassword
+        );
+        
+        setPasswordSuccess('Password changed successfully');
+        setPasswordData({
+          email: user?.email || '',
+          token: '',
+          newPassword: '',
+          confirmPassword: ''
+        });
+        
+        // Close modal after a delay
+        setTimeout(() => {
+          setShowPasswordModal(false);
+          setPasswordSuccess('');
+          setStep(1);
+        }, 2000);
+        
+      } catch (error) {
+        setPasswordError(error.message || 'Failed to change password. Please try again.');
+      } finally {
+        setChangingPassword(false);
+      }
+    };
+
+    // pentru a nu si pierde focusul de pe inputuri... 
+    const tokenInputRef = useRef(null);
+    const newPasswordInputRef = useRef(null);
+    const confirmPasswordInputRef = useRef(null);
+    
+    // Adaugă aceste funcții de handler pentru fiecare input
+    const handleTokenChange = (e) => {
+      setPasswordData({...passwordData, token: e.target.value});
+      // Asigură-te că inputul păstrează focusul după actualizarea stării
+      setTimeout(() => {
+        if (tokenInputRef.current) {
+          tokenInputRef.current.focus();
+        }
+      }, 0);
+    };
+    
+    const handleNewPasswordChange = (e) => {
+      setPasswordData({...passwordData, newPassword: e.target.value});
+      setTimeout(() => {
+        if (newPasswordInputRef.current) {
+          newPasswordInputRef.current.focus();
+        }
+      }, 0);
+    };
+    
+    const handleConfirmPasswordChange = (e) => {
+      setPasswordData({...passwordData, confirmPassword: e.target.value});
+      setTimeout(() => {
+        if (confirmPasswordInputRef.current) {
+          confirmPasswordInputRef.current.focus();
+        }
+      }, 0);
+    };
+
+    const PasswordChangeModal = () => (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowPasswordModal(false)}>
+        <div className="bg-white rounded-lg p-8 max-w-md w-full" onClick={e => e.stopPropagation()}>
+          <h2 className="text-2xl font-bold mb-4">Change Password</h2>
+          
+          {passwordError && (
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+              {passwordError}
+            </div>
+          )}
+          
+          {passwordSuccess && (
+            <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
+              {passwordSuccess}
+            </div>
+          )}
+          
+          {step === 1 ? (
+            <form onSubmit={handleRequestPasswordReset}>
+              <div className="mb-4">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  value={passwordData.email}
+                  readOnly
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50"
+                />
+                <p className="mt-1 text-xs text-gray-500">We'll send a verification code to this email</p>
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={changingPassword}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {changingPassword ? 'Sending...' : 'Send Reset Code'}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleResetPassword}>
+              <div className="mb-4">
+                <label htmlFor="token" className="block text-sm font-medium text-gray-700 mb-1">
+                  Verification Code
+                </label>
+                <input
+                  type="text"
+                  id="token"
+                  ref={tokenInputRef}
+                  value={passwordData.token}
+                  onChange={handleTokenChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  required
+                  placeholder="Enter the 6-digit code"
+                />
+              </div>
+              
+              <div className="mb-4">
+                <label htmlFor="new-password" className="block text-sm font-medium text-gray-700 mb-1">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  id="new-password"
+                  ref={newPasswordInputRef}
+                  value={passwordData.newPassword}
+                  onChange={handleNewPasswordChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+                <p className="mt-1 text-xs text-gray-500">Password must be at least 8 characters long</p>
+              </div>
+              
+              <div className="mb-6">
+                <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-1">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  id="confirm-password"
+                  ref={confirmPasswordInputRef}
+                  value={passwordData.confirmPassword}
+                  onChange={handleConfirmPasswordChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep(1);
+                    setPasswordError('');
+                    setPasswordSuccess('');
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  disabled={changingPassword}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {changingPassword ? 'Changing...' : 'Change Password'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    );
+    
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         const keys = name.split('.');
@@ -233,6 +472,8 @@ const ParticipantDashboard = (({user}) => {
           setLoading(false);
         }
     };
+
+
 
     return (
         <div className="bg-gray-50 min-h-screen">
@@ -613,7 +854,7 @@ const ParticipantDashboard = (({user}) => {
                                     <button
                                       type="submit"
                                       disabled={loading}
-                                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                      className="mt-4 mr-2 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                       {loading ? (
                                         <span className="flex items-center">
@@ -624,6 +865,13 @@ const ParticipantDashboard = (({user}) => {
                                           Updating...
                                         </span>
                                       ) : 'Save Changes'}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowPasswordModal(true)}
+                                      className="mt-4 px-4 py-2 border border-blue-300 text-blue-600 rounded-md hover:bg-blue-50"
+                                    >
+                                      Change Password
                                     </button>
                                   </div>
                                 </form>
@@ -904,6 +1152,8 @@ const ParticipantDashboard = (({user}) => {
                                 )}
                               </div>
                             )}
+
+                            {showPasswordModal && <PasswordChangeModal />}
                           </div>
                           </div>
                       </div>

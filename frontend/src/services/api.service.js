@@ -84,6 +84,30 @@ export const authApi = {
         'Content-Type': 'application/json'
       }
     }),
+
+  sendVerifyEmail: (userId) =>
+    fetchApi('/auth/send-verify-token', {
+      method: 'POST',
+      body: JSON.stringify({ userId }),
+    }),
+  
+  verifyEmail: (userId, emailToken) =>
+    fetchApi('/auth/verify-account', {
+      method: 'POST',
+      body: JSON.stringify({ userId, emailToken }),
+    }),
+  
+  sendResetEmailToken: (email) =>
+    fetchApi('/auth/send-reset-token', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+  
+  resetPassword: (email, token, newPassword) =>
+    fetchApi('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ email, token, newPassword }),
+    }),
 };
 
 export const eventsApi = {
