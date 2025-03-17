@@ -260,7 +260,7 @@ export const sendVerifyEmail = async (req,res) => {
 
     } catch(error) {
         console.log("Error in sendVerify email");
-        return res.status(500).json({message: "Internal server error"});
+        return res.status(500).json({message: "Internal server error", error: error.message});
     }
 }
 
@@ -321,6 +321,7 @@ export const verifyEmail = async (req, res) => {
 export const sendResetEmailtoken = async (req, res) =>{
 
     try {
+        console.log("Send reset email token function")
         const  {email} = req.body;
 
         if (!email) {
@@ -344,6 +345,10 @@ export const sendResetEmailtoken = async (req, res) =>{
         user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
 
         await user.save();
+
+        console.log("User: ", user);
+        
+        console.log("Email token: ", emailToken);
 
         const mailOption = {
             from: process.env.SENDER_EMAIL,

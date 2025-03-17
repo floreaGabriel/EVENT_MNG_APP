@@ -97,6 +97,41 @@ export const createEvent = async (req, res) => {
                 success: false, 
                 message: 'Only organizers can create events' 
               });
+        } else {
+
+            console.log("Verificare daca se poate crea eveniment...");
+            // Check subscription plan limits
+            const currentMonthEvents = await Event.countDocuments({
+                organizer: userId,
+                createdAt: { 
+                $gte: new Date(new Date().setDate(1)) // First day of current month
+                }
+            });
+  
+            // Set limits based on subscription plan
+            let eventLimit;
+            switch (user.organizerProfile.subscriptionPlan) {
+                case 'FREE':
+                eventLimit = 5;
+                break;
+                case 'PREMIUM':
+                eventLimit = 20;
+                break;
+                case 'ENTERPRISE':
+                eventLimit = Infinity; // Unlimited
+                break;
+                default:
+                eventLimit = 5; // Default to FREE plan limit
+            }
+            
+            console.log("Evenimente create: ", currentMonthEvents);
+            
+            if (currentMonthEvents >= eventLimit) {
+                return res.status(403).json({
+                success: false,
+                message: `You have reached your monthly limit of ${eventLimit} events for your ${user.organizerProfile.subscriptionPlan} plan. Please upgrade your plan to create more events.`
+                });
+            }
         }
 
         

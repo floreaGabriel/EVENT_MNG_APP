@@ -106,11 +106,6 @@ const Navbar = ({ user, setUser }) => {
                     <Link to="/profile-organizer" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                       Your Profile
                     </Link>)}
-                    {user.roles?.includes('ORGANIZER') && (
-                      <Link to="/my-events" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        My Events
-                      </Link>
-                    )}
                     <button
                       onClick={handleLogout}
                       className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

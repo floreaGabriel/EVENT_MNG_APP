@@ -287,53 +287,60 @@ const CreateEvent = ({user}) => {
     // Function to create event (used for both regular submit and save as draft)
     const createEvent = async (asDraft = false) => {
         try {
-            console.log("Handle submit");
-            // Prevent multiple submissions
-            if (isSubmitting) return;
-            
-            // Validate form
-            if (!validateForm()) return;
-            
-            setIsSubmitting(true);
-            
-            // Prepare data for submission
-            const eventData = { ...formData };
-            
-            // Set status if saving as draft
-            if (asDraft) {
-                eventData.status = 'DRAFT';
-            }
-            
-            // Convert dates to ISO format
-            if (eventData.dates.start) {
-                eventData.dates.start = new Date(eventData.dates.start).toISOString();
-            }
-            if (eventData.dates.end) {
-                eventData.dates.end = new Date(eventData.dates.end).toISOString();
-            }
-            if (eventData.dates.doorsOpen) {
-                eventData.dates.doorsOpen = new Date(eventData.dates.doorsOpen).toISOString();
-            }
-            
-            // Process cover image
-            if (coverImageFile) {
-                const base64Data = await getBase64FromFile(coverImageFile);
-                eventData.coverImageBase64 = base64Data;
-            }
-            
-            // Use our API service to create the event
-            const data = await eventsApi.createEvent(eventData);
-            
-            // Redirect to the event page or events list
-            navigate(`/events/${data.data._id}`);
-            
+          console.log("Handle submit");
+          // Prevent multiple submissions
+          if (isSubmitting) return;
+      
+          // Validate form
+          if (!validateForm()) return;
+      
+          setIsSubmitting(true);
+      
+          // Prepare data for submission
+          const eventData = { ...formData };
+      
+          // Set status if saving as draft
+          if (asDraft) {
+            eventData.status = 'DRAFT';
+          }
+      
+          // Convert dates to ISO format
+          if (eventData.dates.start) {
+            eventData.dates.start = new Date(eventData.dates.start).toISOString();
+          }
+          if (eventData.dates.end) {
+            eventData.dates.end = new Date(eventData.dates.end).toISOString();
+          }
+          if (eventData.dates.doorsOpen) {
+            eventData.dates.doorsOpen = new Date(eventData.dates.doorsOpen).toISOString();
+          }
+      
+          // Process cover image
+          if (coverImageFile) {
+            const base64Data = await getBase64FromFile(coverImageFile);
+            eventData.coverImageBase64 = base64Data;
+          }
+      
+          // Use our API service to create the event
+          const data = await eventsApi.createEvent(eventData);
+      
+          // Redirect to the event page or events list
+          navigate(`/events/${data.data._id}`);
+      
         } catch (error) {
+          if (error.response && error.response.status === 403 && 
+              error.response.data.message.includes('reached your monthly limit of 5 events')) {
+            // Show alert for plan limit error
+            alert('You have reached your monthly limit of 5 events for your FREE plan. Please upgrade your plan to create more events.');
+            setError('Plan limit reached. Please upgrade your subscription.');
+          } else {
             setError(error.message || 'An error occurred while creating the event');
             console.error('Error creating event:', error);
+          }
         } finally {
-            setIsSubmitting(false);
+          setIsSubmitting(false);
         }
-    };
+      };
 
 
         return (
@@ -342,11 +349,7 @@ const CreateEvent = ({user}) => {
         <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-6">Create New Event</h1>
             
-            {error && (
-            <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-                {error}
-            </div>
-            )}
+            
 
             <form onSubmit={handleSubmit} className="space-y-8">
             {/* Basic Information Section */}
@@ -860,6 +863,13 @@ const CreateEvent = ({user}) => {
                 </button>
                 </div>
             </div>
+
+            {error && (
+            <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+                {error}
+            </div>
+            )}
+            
             </form>
         </div>
         </div>

@@ -252,6 +252,67 @@ const OrganizerDashboard = (({user}) => {
         reader.readAsDataURL(file);
     };
 
+    const handleSubscriptionSelect = async (newPlan) => {
+      // If the selected plan is already the current plan, do nothing
+      if (profileData.organizerProfile.subscriptionPlan === newPlan) {
+        return;
+      }
+    
+      setLoading(true);
+      setError('');
+      setSuccess('');
+    
+      try {
+        // Prepare the updated profile data with the new subscription plan
+        const updatedProfileData = {
+          ...profileData,
+          organizerProfile: {
+            ...profileData.organizerProfile,
+            subscriptionPlan: newPlan,
+          },
+        };
+    
+        // Make API call to update the profile with the new subscription plan
+        const response = await authApi.updateProfile(updatedProfileData);
+    
+        // Update local state with the new profile data
+        setProfileData(updatedProfileData);
+    
+        // Update the user object in localStorage
+        const updatedUser = { 
+          ...user, 
+          ...updatedProfileData, 
+          avatar: response.data.avatar 
+        };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+    
+        // Show success message
+        setSuccess(`Successfully changed to ${newPlan} plan!`);
+    
+        // Optional: Redirect to profile tab after success
+        setTimeout(() => {
+          setActiveTab('profile');
+          setSuccess('');
+        }, 2000);
+    
+      } catch (err) {
+        // Handle errors
+        setError('Failed to change subscription plan. Please try again.');
+        console.error('Error changing subscription plan:', err);
+    
+        // Optional: Revert to previous state if needed
+        setProfileData(prevData => ({
+          ...prevData,
+          organizerProfile: {
+            ...prevData.organizerProfile,
+            subscriptionPlan: user.organizerProfile.subscriptionPlan
+          }
+        }));
+      } finally {
+        setLoading(false);
+      }
+    };
+
     return (
         <div className="bg-gray-50 min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -308,7 +369,15 @@ const OrganizerDashboard = (({user}) => {
                       {user.firstname} {user.lastname}
                     </h2>
                     <p className="text-gray-500 text-sm">@{user.username}</p>
-  
+                      {/* Add subscription plan display */}
+                      {profileData.organizerProfile.subscriptionPlan && (
+                        <p className="text-gray-600 text-sm mt-1">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {profileData.organizerProfile.subscriptionPlan}
+                          </span>
+                        </p>
+                      )}
+
                     {/* User badges/roles */}
                     <div className="mt-3 flex flex-wrap gap-2 justify-center">
                       {user.roles.map((role) => (
@@ -473,7 +542,7 @@ const OrganizerDashboard = (({user}) => {
                         <h3 className="text-xl font-medium text-gray-900 mb-4">PREMIUM</h3>
                         <p className="text-gray-600 mb-4">Enhanced features for growing organizers.</p>
                         <ul className="text-gray-600 space-y-2 mb-6">
-                          <li>✅ Create up to 50 events</li>
+                          <li>✅ Create up to 20 events per month</li>
                           <li>✅ Advanced analytics</li>
                           <li>✅ Priority support</li>
                         </ul>
@@ -491,7 +560,7 @@ const OrganizerDashboard = (({user}) => {
                         <h3 className="text-xl font-medium text-gray-900 mb-4">ENTERPRISE</h3>
                         <p className="text-gray-600 mb-4">Premium features for large organizations.</p>
                         <ul className="text-gray-600 space-y-2 mb-6">
-                          <li>✅ Unlimited events</li>
+                          <li>✅ Unlimited event creation</li>
                           <li>✅ Custom analytics</li>
                           <li>✅ Dedicated support</li>
                         </ul>
@@ -894,7 +963,60 @@ const OrganizerDashboard = (({user}) => {
                             <svg className="flex-shrink-0 h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                             </svg>
-                            <span className="ml-2 text-sm text-gray-500">Featured events (1 per month)</span>
+                            <span className="ml-2 text-sm text-gray-500">Featured events (5 per month)</span>
+                            </li>
+                            <li className="flex items-start">
+                            <svg className="flex-shrink-0 h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            <span className="ml-2 text-sm text-gray-500">Priority support</span>
+                            </li>
+                        </ul>
+                        <button
+                            type="button"
+                            disabled={profileData.organizerProfile.subscriptionPlan === 'FREE'}
+                            onClick={() => handleSubscriptionSelect('FREE')}
+                            className={`mt-8 w-full px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium ${
+                            profileData.organizerProfile.subscriptionPlan === 'FREE'
+                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                : 'text-purple-700 bg-purple-100 hover:bg-purple-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500'
+                            }`}
+                        >
+                            {profileData.organizerProfile.subscriptionPlan === 'FREE' ? 'Current Plan' : 'Select Plan'}
+                        </button>
+                        </div>
+                        
+                        {/* Premium Plan */}
+                        <div className={`border rounded-lg p-6 flex-1 ${
+                        profileData.organizerProfile.subscriptionPlan === 'PREMIUM' 
+                            ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500' 
+                            : 'border-gray-200'
+                        }`}>
+                        <div className="flex justify-between items-start">
+                            <h3 className="text-lg font-medium text-gray-900">PREMIUM</h3>
+                            {profileData.organizerProfile.subscriptionPlan === 'PREMIUM' && (
+                            <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                                Current Plan
+                            </span>
+                            )}
+                        </div>
+                        <p className="mt-4 text-sm text-gray-500">Premium features for small organizers just getting started.</p>
+                        <p className="mt-6">
+                            <span className="text-4xl font-extrabold text-gray-900">50</span>
+                            <span className="text-base font-medium text-gray-500"> RON/mo</span>
+                        </p>
+                        <ul className="mt-6 space-y-4">
+                            <li className="flex items-start">
+                            <svg className="flex-shrink-0 h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            <span className="ml-2 text-sm text-gray-500">Advanced analytics</span>
+                            </li>
+                            <li className="flex items-start">
+                            <svg className="flex-shrink-0 h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            <span className="ml-2 text-sm text-gray-500">Featured events (20 per month)</span>
                             </li>
                             <li className="flex items-start">
                             <svg className="flex-shrink-0 h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -916,7 +1038,7 @@ const OrganizerDashboard = (({user}) => {
                             {profileData.organizerProfile.subscriptionPlan === 'PREMIUM' ? 'Current Plan' : 'Select Plan'}
                         </button>
                         </div>
-                        
+
                         {/* Enterprise Plan */}
                         <div className={`border rounded-lg p-6 flex-1 ${
                         profileData.organizerProfile.subscriptionPlan === 'ENTERPRISE' 
@@ -933,7 +1055,7 @@ const OrganizerDashboard = (({user}) => {
                         </div>
                         <p className="mt-4 text-sm text-gray-500">Full-featured solution for large organizations with multiple events.</p>
                         <p className="mt-6">
-                            <span className="text-4xl font-extrabold text-gray-900">999</span>
+                            <span className="text-4xl font-extrabold text-gray-900">150</span>
                             <span className="text-base font-medium text-gray-500"> RON/mo</span>
                         </p>
                         <ul className="mt-6 space-y-4">
