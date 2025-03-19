@@ -147,6 +147,11 @@ export const eventsApi = {
     
     checkSavedEvent: (eventId) =>
       fetchApi(`/events/saved/${eventId}`),
+
+    getOrganizerStats: () =>
+      fetchApi('/stats/organizer', {
+        method: 'GET'
+      })
 };
 
 
@@ -182,6 +187,9 @@ export const registrationsApi = {
     fetchApi(`/registrations/saved-events`),
 
 }
+
+
+
 // Export the raw fetchApi for custom calls
 export { fetchApi };
 

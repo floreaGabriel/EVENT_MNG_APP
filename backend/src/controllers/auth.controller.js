@@ -4,6 +4,7 @@ import { generateTokenAndSetCookie } from "../lib/utils/generateTokenAndSetCooki
 import cloudinary from '../lib/cloudinary.js';
 import transporter from "../lib/nodemailer.js";
 
+
 export const signup = async (req, res) => {
     console.log("Signup function!!!");
     try {
@@ -372,7 +373,6 @@ export const sendResetEmailtoken = async (req, res) =>{
     }
 }
 
-
 export const resetPassword = async (req,res) => {
     try {
         console.log("Reset password function");
@@ -431,3 +431,4 @@ export const resetPassword = async (req,res) => {
         });
     }
 }
+

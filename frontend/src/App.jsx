@@ -16,6 +16,7 @@ import OrganizerDashboard from './pages/OrganizerDashboard'
 import EventRegistrations from './pages/EventRegistrations'
 import ForgotPassword from './pages/ForgotPassword'
 import VerifyEmail from './pages/VerifyEmail'
+import OrganizerStats from './pages/OrganizerStats'
 
 function App() {
   const [user, setUser] = useState(null);
@@ -81,7 +82,7 @@ function App() {
             <Route path="/register" element={<Register setUser={setUser} />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
-            
+            <Route path="/organizer-stats" element={<OrganizerStats />} />
             {/* 
             <Route path="/events/:id" element={<EventDetails />} />
             <Route path="/categories" element={<Categories />} />

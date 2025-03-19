@@ -341,9 +341,6 @@ export const toggleSaveEvent = async (req, res) => {
     }
 };
 
-
-  // Add this function to your backend/src/controllers/events.controller.js file
-
 export const checkSavedEvent = async (req, res) => {
     try {
       const userId = req.user._id;
@@ -373,3 +370,4 @@ export const checkSavedEvent = async (req, res) => {
       });
     }
 };
+
