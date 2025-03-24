@@ -1,5 +1,5 @@
 import express from 'express';
-import { getEvents, createEvent, getEventById, updateEvent,toggleSaveEvent,checkSavedEvent } from '../controllers/events.controller.js';
+import { getEvents, createEvent, getEventById, updateEvent,toggleSaveEvent,checkSavedEvent, deleteEvent } from '../controllers/events.controller.js';
 import { protectedRoute } from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
@@ -14,5 +14,7 @@ router.put("/update/:id", protectedRoute, updateEvent);
 
 router.post("/save/:eventId", protectedRoute, toggleSaveEvent);
 router.get("/saved/:eventId", protectedRoute, checkSavedEvent);
+
+router.delete("/deleteEvent/:id", protectedRoute, deleteEvent);
 
 export default router;

@@ -1,4 +1,3 @@
-
 const API_BASE_URL = 'http://localhost:5001/api';
 
 
@@ -151,7 +150,12 @@ export const eventsApi = {
     getOrganizerStats: () =>
       fetchApi('/stats/organizer', {
         method: 'GET'
-      })
+      }),
+
+    deleteEvent: (eventId) =>
+      fetchApi(`/events/deleteEvent/${eventId}`, {
+        method: 'DELETE',
+      }),
 };
 
 

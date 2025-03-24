@@ -371,3 +371,46 @@ export const checkSavedEvent = async (req, res) => {
     }
 };
 
+export const deleteEvent = async (req, res) => {
+
+    try {
+        const {id:eventId}= req.params;
+        const userId = req.user._id;
+
+        const event = await Event.findById(eventId);
+        if (!event) {
+            return res.status(404).json({
+                success: false,
+                message: "Event not found"
+            })
+        }
+
+        // verificam daca userul curent este organizatorul evenimentului
+
+        if (event.organizer.toString() != userId.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: "You are not the organizer of this event"
+            })
+        }
+
+        await Event.findByIdAndDelete(eventId);
+
+        if (event.media && event.media.coverImage) {
+            const publicId = event.media.coverImage.split('/').pop().split('.')[0]; // Extragem publicId din URL
+            await cloudinary.uploader.destroy(`events/${publicId}`);
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Event deleted successfully'
+        });
+    } catch (error) {
+        console.error('Error in deleteEvent:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to delete event',
+            error: error.message
+        });
+    }
+}

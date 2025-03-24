@@ -313,6 +313,30 @@ const OrganizerDashboard = (({user}) => {
       }
     };
 
+    const handleDeleteEvent = async (eventId) => {
+      if (!window.confirm('Are you sure you want to delete this event?')) return;
+  
+      try {
+        setEventsLoading(true);
+        const response = await eventsApi.deleteEvent(eventId); // Apelăm metoda deleteEvent
+  
+        // Verificăm răspunsul (presupunem că backend-ul returnează { success: true, message: '...' })
+        if (response.success) {
+          const updatedEvents = events.filter((event) => event._id !== eventId);
+          setEvents(updatedEvents);
+          setFilteredEvents(filterEventsByTab(updatedEvents, eventTab));
+          setSuccess(response.message || 'Event deleted successfully!');
+        } else {
+          throw new Error('Unexpected response from server');
+        }
+      } catch (error) {
+        console.error('Error deleting event:', error);
+        setError(error.message || 'Failed to delete event. Please try again.');
+      } finally {
+        setEventsLoading(false);
+      }
+    };
+
     return (
         <div className="bg-gray-50 min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -906,6 +930,15 @@ const OrganizerDashboard = (({user}) => {
                             >
                               View Event
                             </Link>
+                            <button
+                              onClick={() => handleDeleteEvent(event._id)}
+                              className="inline-flex items-center px-3 py-1 border border-red-600 text-red-600 rounded-md hover:bg-red-50"
+                            >
+                              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                              </svg>
+                              Delete
+                            </button>
                           </div>
                         </div>
                       </div>
