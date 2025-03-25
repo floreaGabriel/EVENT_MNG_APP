@@ -42,6 +42,9 @@ const ParticipantDashboard = (({user}) => {
         }
     });
 
+    const [profilePicFile, setProfilePicFile] = useState(null);
+    const [profilePicPreview, setProfilePicPreview] = useState(user?.avatar || '');
+
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -424,52 +427,67 @@ const ParticipantDashboard = (({user}) => {
         }));
     };
     const handleAvatarChange = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        // File validation
-        if (!file.type.match('image.*')) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      // File validation
+      if (!file.type.match('image.*')) {
           setError('Please select an image file');
           return;
-        }
-        
-        if (file.size > 5 * 1024 * 1024) { // 5MB
+      }
+
+      if (file.size > 5 * 1024 * 1024) { // 5MB
           setError('Image must be less than 5MB');
           return;
-        }
-        
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          setProfileData(prevData => ({
-            ...prevData,
-            avatar: event.target.result
-          }));
-        };
-        reader.readAsDataURL(file);
-    };
+      }
 
+      // Store the raw file
+      setProfilePicFile(file);
+
+      // Generate a preview URL for display
+      const reader = new FileReader();
+      reader.onload = (event) => {
+          setProfilePicPreview(event.target.result);
+      };
+      reader.readAsDataURL(file);
+  };
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
         setSuccess('');
-        
+
         try {
-          // Here you would call your API to update the profile
-          const response = await authApi.updateProfile(profileData);
-          
-          // For now, we'll just simulate a successful update
-          // await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          // Update the user in context/local storage
-          const updatedUser = { ...user, ...profileData };
-          localStorage.setItem('user', JSON.stringify(updatedUser));
-          setSuccess('Profile updated successfully!');
+            // Prepare data for submission
+            const userData = { ...profileData };
+
+            // Add the profile picture file to userData
+            if (profilePicFile) {
+                userData.profilePic = profilePicFile;
+            }
+
+            console.log("UserData before API call:", userData);
+
+            // Call the API to update the profile
+            const response = await authApi.updateProfile(userData);
+
+            // Update the user in local storage
+            const updatedUser = { ...user, ...response.data };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+
+            // Update the profileData state with the new avatar URL
+            setProfileData(prevData => ({
+                ...prevData,
+                avatar: response.data.avatar || prevData.avatar,
+            }));
+            setProfilePicPreview(response.data.avatar || profilePicPreview);
+
+            setSuccess('Profile updated successfully!');
         } catch (err) {
-          setError('Failed to update profile. Please try again.');
-          console.error('Error updating profile:', err);
+            setError(err.message || 'Failed to update profile. Please try again.');
+            console.error('Error updating profile:', err);
         } finally {
-          setLoading(false);
+            setLoading(false);
         }
     };
 

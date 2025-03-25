@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import { connectDB } from './lib/db.js';
 import cors from 'cors';
+import multer from 'multer';
 
 import authRoutes from './routes/auth.route.js';
 import eventsRoute from './routes/events.route.js';
@@ -23,9 +24,22 @@ app.use(cors({
 }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(express.json({limit: '50mb'}));
-app.use(express.urlencoded({limit: '50mb', extended: true}));
 
+// multer for storage 
+// Configure multer for file uploads
+const storage = multer.memoryStorage(); // Store files in memory (you can also use diskStorage to save to disk)
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req, file, cb) => {
+        const validImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (validImageTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only JPEG, PNG, and GIF images are allowed'), false);
+        }
+    }
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/events", eventsRoute);

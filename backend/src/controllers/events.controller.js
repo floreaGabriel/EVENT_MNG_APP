@@ -134,26 +134,40 @@ export const createEvent = async (req, res) => {
             }
         }
 
-        
+        // Parse the event data from FormData
+        const eventData = {};
+        for (const [key, value] of Object.entries(req.body)) {
+            try {
+                // Try to parse the value as JSON (for nested objects like location, dates, pricing)
+                eventData[key] = JSON.parse(value);
+            } catch (e) {
+                // If parsing fails, treat it as a string
+                eventData[key] = value;
+            }
+        }
         // extragem datele evenimentului
 
-        const eventData = req.body;
         eventData.organizer = userId;
 
         console.log("EventData: ", eventData);
 
-        if (eventData.coverImageBase64) {
-            console.log("Am gasit imagine in crearea evenimentului...");
-            const uploadResult = await cloudinary.uploader.upload(eventData.coverImageBase64, {
-                folder: 'events'
-            });
+        // Handle the cover image if uploaded
+        if (req.file) {
+            console.log("Uploading image to Cloudinary...");
+            const uploadResult = await cloudinary.uploader.upload(
+                `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`,
+                {
+                    folder: 'events',
+                    resource_type: 'image',
+                }
+            );
+
+            console.log("Cloudinary upload result:", uploadResult);
 
             eventData.media = {
                 ...eventData.media,
-                coverImage: uploadResult.secure_url
+                coverImage: uploadResult.secure_url,
             };
-
-            delete eventData.coverImageBase64;
         }
 
         // cream noul eveniment

@@ -4,9 +4,7 @@ const API_BASE_URL = 'http://localhost:5001/api';
 const fetchApi = async (endpoint, options = {}) => {
   // Default options
   const defaultOptions = {
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: {},
     credentials: 'include', // Include cookies for authentication
   };
 
@@ -19,13 +17,18 @@ const fetchApi = async (endpoint, options = {}) => {
       ...options.headers,
     },
   };
+  // If the body is FormData, do not set Content-Type (let the browser handle it)
+  // Also, do not stringify the body
+  if (!(fetchOptions.body instanceof FormData)) {
+    fetchOptions.headers['Content-Type'] = fetchOptions.headers['Content-Type'] || 'application/json';
+    if (fetchOptions.body && typeof fetchOptions.body === 'object') {
+      fetchOptions.body = JSON.stringify(fetchOptions.body);
+    }
+  }
 
   try {
-    //console.log("fetchApi", `${API_BASE_URL}${endpoint}`, fetchOptions);
-
     const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
-    
-    //console.log("response", response);
+
     // Check if the response is JSON
     const contentType = response.headers.get('content-type');
     const isJson = contentType && contentType.includes('application/json');
@@ -75,14 +78,28 @@ export const authApi = {
       method: 'GET',
     }),
 
-  updateProfile: (profileData) =>
-    fetchApi('/auth/updateProfile', {
-      method: 'PUT',
-      body: JSON.stringify(profileData),
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    }),
+  updateProfile: (userData) => {
+    const formData = new FormData();
+
+    for (const [key, value] of Object.entries(userData)) {
+        if (key === 'profilePic' && value instanceof File) {
+            formData.append(key, value);
+        } else if (typeof value === 'object' && value !== null) {
+            formData.append(key, JSON.stringify(value));
+        } else {
+            formData.append(key, value);
+        }
+    }
+
+    for (const [key, value] of formData.entries()) {
+        console.log(`FormData entry: ${key}=${value}`);
+    }
+
+    return fetchApi('/auth/updateProfile', {
+        method: 'PUT',
+        body: formData,
+    });
+  },
 
   sendVerifyEmail: (userId) =>
     fetchApi('/auth/send-verify-token', {
@@ -126,18 +143,51 @@ export const eventsApi = {
     fetchApi(`/events/${id}`),
 
 
-  createEvent: (eventData) =>
-    fetchApi('/events/createEvent', {
+  createEvent: (eventData) => {
+    const formData = new FormData();
+
+    // Append all event data fields to FormData
+    // Since FormData can only store strings or files, we need to stringify nested objects
+    for (const [key, value] of Object.entries(eventData)) {
+      if (key === 'coverImage' && value instanceof File) {
+        // If the value is a File (for coverImage), append it directly
+        formData.append(key, value);
+      } else if (typeof value === 'object' && value !== null) {
+        // If the value is an object (e.g., location, dates, pricing), stringify it
+        formData.append(key, JSON.stringify(value));
+      } else {
+        // For primitive values, append as-is
+        formData.append(key, value);
+      }
+    }
+
+    return fetchApi('/events/createEvent', {
       method: 'POST',
-      body: JSON.stringify(eventData),
-    }),
+      body: formData,
+    });
+
+    },
 
 
-  updateEvent: (id, eventData) =>
-    fetchApi(`/events/update/${id}`, {
+  updateEvent: (id, eventData) => {
+    const formData = new FormData();
+
+    // Append all event data fields to FormData
+    for (const [key, value] of Object.entries(eventData)) {
+      if (key === 'coverImage' && value instanceof File) {
+        formData.append(key, value);
+      } else if (typeof value === 'object' && value !== null) {
+        formData.append(key, JSON.stringify(value));
+      } else {
+        formData.append(key, value);
+      }
+    }
+
+    return fetchApi(`/events/update/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(eventData),
-    }),
+      body: formData,
+    });
+    },
 
     toggleSaveEvent: (eventId) =>
       fetchApi(`/events/save/${eventId}`, {

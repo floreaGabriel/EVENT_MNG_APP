@@ -118,82 +118,93 @@ export const logout = async (req, res) => {
 export const updateProfile = async (req, res) => {
     console.log("Actualizare profil ...");
     try {
-
-        console.log("Actualizare profil ...");
         const userData = req.body;
         const userID = req.user._id;
 
-        let profilePicUrl = undefined;
-        if (userData.profilePic) {
-            const uploadResponse = await cloudinary.uploader.upload(userData.profilePic);
-            profilePicUrl = uploadResponse.secure_url;
+        // Parse the user data from FormData (non-file fields)
+        const updateData = {};
+        for (const [key, value] of Object.entries(req.body)) {
+            try {
+                // Try to parse the value as JSON (for nested objects like participantProfile, organizerProfile)
+                updateData[key] = JSON.parse(value);
+            } catch (e) {
+                // If parsing fails, treat it as a string
+                updateData[key] = value;
+            }
         }
 
-        let updateData = {};
+        // Handle the profile picture if uploaded
+        let profilePicUrl = undefined;
+        if (req.file) {
+            console.log("Uploading profile picture to Cloudinary...");
+            const uploadResponse = await cloudinary.uploader.upload(
+                `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`,
+                {
+                    folder: 'profiles', // Store profile pictures in a 'profiles' folder
+                    resource_type: 'image',
+                }
+            );
+            profilePicUrl = uploadResponse.secure_url;
+            console.log("Cloudinary upload result:", uploadResponse);
+        }
 
-        if (userData.firstname) updateData.firstname = userData.firstname;
-        if (userData.lastname) updateData.lastname = userData.lastname;
-        if (userData.username) updateData.username = userData.username;
-        if (userData.email) updateData.email = userData.email;
+        // Build the update object
+        if (updateData.firstname) updateData.firstname = updateData.firstname;
+        if (updateData.lastname) updateData.lastname = updateData.lastname;
+        if (updateData.username) updateData.username = updateData.username;
+        if (updateData.email) updateData.email = updateData.email;
         if (profilePicUrl) updateData.avatar = profilePicUrl;
 
-        // pentru participant
-
-        if (userData.participantProfile) {
+        // For participant profile
+        if (updateData.participantProfile) {
             updateData.participantProfile = {
-                preferences: userData.participantProfile.preferences || {},
-                contactInfo: userData.participantProfile.contactInfo || {},
-                socialMedia: userData.participantProfile.socialMedia || {},
-                description: userData.participantProfile.description || ''
-              };
-        }
-
-        // pentru organizator 
-
-        if (userData.organizerProfile) {
-            updateData.organizerProfile = {
-              description: userData.organizerProfile.description || '',
-              contactInfo: userData.organizerProfile.contactInfo || {},
-              subscriptionPlan: userData.organizerProfile.subscriptionPlan || 'FREE'
+                preferences: updateData.participantProfile.preferences || {},
+                contactInfo: updateData.participantProfile.contactInfo || {},
+                socialMedia: updateData.participantProfile.socialMedia || {},
+                description: updateData.participantProfile.description || '',
             };
         }
-    
-        const options = { 
-        new: true,      // returnează documentul actualizat
-        runValidators: true  // validează datele înainte de actualizare
+
+        // For organizer profile
+        if (updateData.organizerProfile) {
+            updateData.organizerProfile = {
+                description: updateData.organizerProfile.description || '',
+                contactInfo: updateData.organizerProfile.contactInfo || {},
+                subscriptionPlan: updateData.organizerProfile.subscriptionPlan || 'FREE',
+            };
+        }
+
+        const options = {
+            new: true, // Return the updated document
+            runValidators: true, // Validate the data before updating
         };
 
-        const updatedUser = await User.findByIdAndUpdate(
-            userID,
-            updateData,
-            options
-        );
+        const updatedUser = await User.findByIdAndUpdate(userID, updateData, options);
 
         if (!updatedUser) {
             return res.status(404).json({
-              success: false,
-              message: "Utilizatorul nu a fost găsit"
+                success: false,
+                message: "Utilizatorul nu a fost găsit",
             });
         }
-      
-          // Returnăm obiectul utilizator fără parolă
+
+        // Return the user object without the password
         const { password, ...userWithoutPassword } = updatedUser.toObject();
-        
+
         res.status(200).json({
             success: true,
             message: "Profil actualizat cu succes",
-            data: userWithoutPassword
+            data: userWithoutPassword,
         });
-
-    } catch(err) {
+    } catch (err) {
         console.log('Eroare la actualizarea profilului:', err);
         res.status(500).json({
             success: false,
             message: "Eroare la actualizarea profilului",
-            error: err.message
+            error: err.message,
         });
     }
-}
+};
 
 export const checkAuth = (req, res) => {
     try {
