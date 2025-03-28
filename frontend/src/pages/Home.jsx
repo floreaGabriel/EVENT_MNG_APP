@@ -12,7 +12,13 @@ const Home = () => {
     const fetchFeaturedEvents = async () => {
       try {
 
-        const params = { limit: 4 };
+        const params = { 
+          limit: 4,
+          visibility: 'PUBLIC',
+          status: 'PUBLISHED',
+          sortBy: 'currentAttendees', 
+          sortOrder: 'desc'
+        };
         const data = await eventsApi.getEvents(params);
         setFeaturedEvents(data.data);
       } catch (error) {
@@ -20,7 +26,7 @@ const Home = () => {
         setError('Failed to load featured events. Please try again later.');
       } finally {
         setLoading(false);
-      }
+      } 
     };
 
     fetchFeaturedEvents();
