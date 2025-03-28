@@ -169,25 +169,34 @@ export const eventsApi = {
     },
 
 
-  updateEvent: (id, eventData) => {
-    const formData = new FormData();
-
-    // Append all event data fields to FormData
-    for (const [key, value] of Object.entries(eventData)) {
-      if (key === 'coverImage' && value instanceof File) {
-        formData.append(key, value);
-      } else if (typeof value === 'object' && value !== null) {
-        formData.append(key, JSON.stringify(value));
+    updateEvent: (id, eventData) => {
+      // Verificăm dacă există un fișier (coverImage)
+      const hasFile = eventData.coverImage && eventData.coverImage instanceof File;
+  
+      if (hasFile) {
+          // Dacă există un fișier, folosim FormData
+          const formData = new FormData();
+  
+          for (const [key, value] of Object.entries(eventData)) {
+              if (key === 'coverImage' && value instanceof File) {
+                  formData.append(key, value);
+              } else if (typeof value === 'object' && value !== null) {
+                  formData.append(key, JSON.stringify(value));
+              } else {
+                  formData.append(key, value);
+              }
+          }  
+          return fetchApi(`/events/update/${id}`, {
+              method: 'PUT',
+              body: formData,
+          });
       } else {
-        formData.append(key, value);
+          return fetchApi(`/events/update/${id}`, {
+              method: 'PUT',
+              body: eventData, 
+          });
       }
-    }
-
-    return fetchApi(`/events/update/${id}`, {
-      method: 'PUT',
-      body: formData,
-    });
-    },
+  },
 
     toggleSaveEvent: (eventId) =>
       fetchApi(`/events/save/${eventId}`, {

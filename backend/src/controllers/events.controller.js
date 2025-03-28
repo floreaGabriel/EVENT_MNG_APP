@@ -32,7 +32,7 @@ export const getEvents = async (req, res) => {
             // Implicit, afișăm doar evenimentele publice
             filter.visibility = { $regex: '^PUBLIC$', $options: 'i' };
         }
-
+        
         if (status) filter.status = status;
         if (category) filter.category = category;
         if (city) filter['location.city'] = { $regex: city, $options: 'i'};
@@ -310,7 +310,6 @@ export const updateEvent = async (req, res) => {
         });
     }
 }
-
 
 export const toggleSaveEvent = async (req, res) => {
     try {
