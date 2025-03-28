@@ -38,31 +38,22 @@ export const signup = async (req, res) => {
             password: hashedPassword,
 
         });
-        newUser.password = hashedPassword;
 
-    
-        if (newUser) {
-            generateTokenAndSetCookie(newUser._id, res);
-            await newUser.save();
-            console.log(`user created: ${newUser.username}`);
+        await newUser.save();
+        console.log(`user created: ${newUser.username}`);
 
-            // sending welcome email
-            const mailOptions = {
-                from: process.env.SENDER_EMAIL,
-                to: newUser.email,
-                subject: 'Welcome to EventHub',
-                text: `Welcome to EventHub! We are glad to have you as a member of our community. Email id: ${newUser.email}`
-            }
-
-            await transporter.sendMail(mailOptions);
-            console.log('Email sent to:', newUser.email);  
-
-            const { password, ...userWithoutPassword } = newUser.toObject();
-            res.status(201).json({ success: true, message: 'user created successfully', data: userWithoutPassword });
+        try {
+            // Încearcă să trimiți emailul de verificare
+            await sendVerifyEmailHelper(newUser._id);
+        } catch (emailError) {
+            // Dacă trimiterea emailului eșuează, șterge utilizatorul
+            await User.findByIdAndDelete(newUser._id);
+            console.log(`User ${newUser.username} deleted due to email sending failure`);
+            return res.status(500).json({ success: false, message: 'Failed to send verification email', error: emailError.message });
         }
-        else {
-            res.status(400).json({ success: false, message: 'Invalid user data' });
-        }
+
+        const { password, ...userWithoutPassword } = newUser.toObject();
+        res.status(201).json({ success: true, message: 'user created successfully', data: userWithoutPassword });
     } catch(error) {
         res.status(500).json({ success: false, message:  'user creation failed', error: error.message });
     }
@@ -78,6 +69,13 @@ export const login = async (req, res) => {
         if (!user) {
             console.log('User not found');
             return res.status(400).json({ success: false, message: 'Invalid credentials' });
+        }
+
+        if (!user.isVerified) {
+            return res.status(403).json({
+                 success: false,
+                  message: 'Email not verified. Please verify your email to log in.' 
+                });
         }
 
         const isPasswordCorrect = await bcrypt.compare(userPassword, user.password);
@@ -217,37 +215,26 @@ export const checkAuth = (req, res) => {
     }
 }
 
-export const sendVerifyEmail = async (req,res) => {
-
+const sendVerifyEmailHelper = async (userId) => {
     try {
-
         console.log("Send verify email function");
 
-        const {userId}  = req.body;
-
-        console.log("userId:", userId);
         const user = await User.findById(userId);
         if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: "User not found"
-            })
+            throw new Error("User not found");
         }
 
         console.log("User: ", user.username);
 
         if (user.isVerified) {
-            return res.status(400).json({
-                success: false, 
-                message: "User is already verified"
-            })
+            throw new Error("User is already verified");
         }
 
         console.log("User is not verified");
 
         const emailToken = Math.floor(100000 + Math.random() * 900000).toString();
         user.verificationToken = emailToken;
-        user.verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
+        user.verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 ore
 
         await user.save();
 
@@ -264,15 +251,25 @@ export const sendVerifyEmail = async (req,res) => {
 
         await transporter.sendMail(mailOption);
         console.log("Email sent to: ", user.email);
-        
+    } catch (error) {
+        console.log("Error in sendVerifyEmailHelper:", error.message);
+        throw error;
+    }
+};
+
+export const sendVerifyEmail = async (req,res) => {
+    try {
+        const { userId } = req.body;
+
+        await sendVerifyEmailHelper(userId);
+
         return res.status(200).json({
             success: true,
             message: "Verification email sent successfully"
         });
-
-    } catch(error) {
-        console.log("Error in sendVerify email");
-        return res.status(500).json({message: "Internal server error", error: error.message});
+    } catch (error) {
+        console.log("Error in sendVerifyEmail:", error.message);
+        return res.status(500).json({ success: false, message: "Internal server error", error: error.message });
     }
 }
 
@@ -316,12 +313,16 @@ export const verifyEmail = async (req, res) => {
 
         await user.save();
 
+        generateTokenAndSetCookie(user._id, res);
+
+        const {password, ...userWithoutPassword} = user.toObject();
+
+
         return res.status(200).json({
             success: true,
-            message: 'Email verified succesfully'
-        })
-
-
+            message: 'Email verified successfully',
+            data: userWithoutPassword
+        });
     } catch (error) {
         return res.status(500).json({
             success: false, 

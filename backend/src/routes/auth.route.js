@@ -29,8 +29,8 @@ router.put("/updateProfile", protectedRoute,upload.single("profilePic"), updateP
 router.get("/check", protectedRoute, checkAuth);
 
 // email si password reset
-router.post("/send-verify-token", protectedRoute, sendVerifyEmail);
-router.post("/verify-account", protectedRoute, verifyEmail);
+router.post("/send-verify-token", sendVerifyEmail);
+router.post("/verify-account", verifyEmail);
 router.post("/send-reset-token", sendResetEmailtoken);
 router.post("/reset-password", resetPassword);
 

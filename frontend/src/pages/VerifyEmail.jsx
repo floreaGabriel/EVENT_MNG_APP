@@ -1,9 +1,8 @@
-// src/pages/VerifyEmail.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { authApi } from '../services/api.service';
 
-const VerifyEmail = () => {
+const VerifyEmail = ({ setUser }) => {
   const [token, setToken] = useState('');
   const [userId, setUserId] = useState('');
   const [loading, setLoading] = useState(false);
@@ -58,10 +57,17 @@ const VerifyEmail = () => {
     setMessage('');
     
     try {
-      await authApi.verifyEmail(userId, token);
-      setMessage('Email verified successfully! Redirecting to login...');
+      const response = await authApi.verifyEmail(userId, token);
+      setMessage('Email verified successfully! Redirecting to home page...');
+      
+      // Setează utilizatorul în starea aplicației
+      if (response.data) {
+        setUser(response.data);
+        localStorage.setItem('user', JSON.stringify(response.data));
+      }
+
       setTimeout(() => {
-        navigate('/login');
+        navigate('/'); // Redirecționează către pagina principală
       }, 3000);
     } catch (error) {
       setError(error.message || 'Failed to verify email. Please try again.');

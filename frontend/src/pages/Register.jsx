@@ -111,26 +111,21 @@ const Register = ({ setUser }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     if (!validateForm()) {
       return;
     }
-
+  
     setIsLoading(true);
     setRegisterError("");
-
+  
     try {
       // Remove confirmPassword before sending to the API
       const { confirmPassword, ...submitData } = formData;
-
+  
       const data = await authApi.register(submitData);
-
-      // Store user data and token if returned
+  
       if (data.success && data.data) {
-        localStorage.setItem("user", JSON.stringify(data.data));
-        // Update user state in the app
-        setUser(data.data);
-
         navigate(`/verify-email?id=${data.data._id}`);
       } else {
         throw new Error(data.message || "Registration failed");

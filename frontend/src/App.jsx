@@ -81,7 +81,7 @@ function App() {
             <Route path="/events/:id" element={<EventDetails user={user} />} />
             <Route path="/register" element={<Register setUser={setUser} />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/verify-email" element={<VerifyEmail setUser={setUser}/>} />
             <Route path="/organizer-stats" element={<OrganizerStats />} />
             {/* 
             <Route path="/events/:id" element={<EventDetails />} />
