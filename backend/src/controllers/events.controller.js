@@ -14,13 +14,24 @@ export const getEvents = async (req, res) => {
             search,
             status,
             isFree,
+            visibility,
+            sortBy,
+            sortOrder,
             page = 1,
             limit = 10
         } = req.query;
 
         // construim filtrul
 
-        const filter = {visibility: 'PUBLIC' };
+        const filter = {};
+
+        // Filtrăm după visibility (case-insensitive)
+        if (visibility) {
+            filter.visibility = { $regex: `^${visibility}$`, $options: 'i' };
+        } else {
+            // Implicit, afișăm doar evenimentele publice
+            filter.visibility = { $regex: '^PUBLIC$', $options: 'i' };
+        }
 
         if (status) filter.status = status;
         if (category) filter.category = category;
@@ -39,6 +50,8 @@ export const getEvents = async (req, res) => {
             };
         }
 
+
+
         // asta e searchul
         if (search) {
             // $or ne permite sa cautam in mai multe campuri odata
@@ -52,16 +65,24 @@ export const getEvents = async (req, res) => {
 
         const skip = (parseInt(page) - 1) * (parseInt(limit));
 
+        const sort = {};
+
+        if (sortBy) {
+
+            sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+        } else {
+            sort['dates.start'] = 1;
+        }
 
         const events = await Event.find(filter)
-            .sort({'dates.start': 1})
+            .sort(sort)
             .skip(skip)
             .limit(parseInt(limit))
             .populate('organizer', 'username avatar organizerProfile.rating');
 
         const total = await Event.countDocuments(filter);
 
-        //console.log(events);
+        console.log("Evenimente filtrate", events);
 
         res.status(200).json({
             success: true, 
