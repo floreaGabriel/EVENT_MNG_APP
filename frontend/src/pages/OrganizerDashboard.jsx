@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authApi, eventsApi } from "../services/api.service";
 
-const OrganizerDashboard = (({user}) => {
+const OrganizerDashboard = (({user, setUser}) => {
     const [activeTab, setActiveTab] = useState('profile');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -28,8 +28,8 @@ const OrganizerDashboard = (({user}) => {
             subscriptionPlan: user?.organizerProfile?.subscriptionPlan || ''
           }
     });
-
-
+    const [profilePicFile, setProfilePicFile] = useState(null);
+    const [profilePicPreview, setProfilePicPreview] = useState(user?.avatar || '');
     const [events, setEvents] = useState([]);
     const [eventsLoading, setEventsLoading] = useState(false);
     const [eventsError, setEventsError] = useState('');
@@ -71,6 +71,31 @@ const OrganizerDashboard = (({user}) => {
       return filtered;
     };
     
+    // modificare user constant cand se schimba ceva la profilulu lui
+    useEffect(() => {
+      setProfileData({
+          firstname: user?.firstname || '',
+          lastname: user?.lastname || '',
+          username: user?.username || '',
+          email: user?.email || '',
+          avatar: user?.avatar || '',
+          organizerProfile: {
+              description: user?.organizerProfile?.description || '',
+              contactInfo: {
+                  businessEmail: user?.organizerProfile?.contactInfo?.businessEmail || '',
+                  phone: user?.organizerProfile?.contactInfo?.phone || '',
+                  website: user?.organizerProfile?.contactInfo?.website || '',
+                  socialMedia: {
+                      linkedin: user?.organizerProfile?.contactInfo?.socialMedia?.linkedin || '',
+                      facebook: user?.organizerProfile?.contactInfo?.socialMedia?.facebook || '',
+                      instagram: user?.organizerProfile?.contactInfo?.socialMedia?.instagram || '',
+                  },
+              },
+              subscriptionPlan: user?.organizerProfile?.subscriptionPlan || '',
+          },
+      });
+      setProfilePicPreview(user?.avatar || '');
+  }, [user]);
     // Use a separate useEffect for filtering
     useEffect(() => {
       if (events.length > 0) {
@@ -172,7 +197,12 @@ const OrganizerDashboard = (({user}) => {
     
           // Apel API pentru actualizarea planului
           const response = await authApi.updateProfile(updatedProfileData);
-          const updatedUser = { ...user, ...updatedProfileData, avatar: response.data.avatar };
+          const updatedUser = { 
+            ...user,
+            ...updatedProfileData,
+            avatar: response.data.avatar 
+          };
+          setUser(updatedUser);
           localStorage.setItem("user", JSON.stringify(updatedUser));
           setSuccess("Plan selected successfully!");
           setTimeout(() => {
@@ -215,10 +245,26 @@ const OrganizerDashboard = (({user}) => {
         setSuccess("");
       
         try {
-          const response = await authApi.updateProfile(profileData);
-          const updatedUser = { ...user, ...profileData, avatar: response.data.avatar };
-          localStorage.setItem("user", JSON.stringify(updatedUser));
-          setSuccess("Profile updated successfully!");
+          const userData = { ...profileData };
+          if (profilePicFile) {
+            userData.profilePic = profilePicFile;
+          }
+
+          console.log("UserData before API call:", userData);
+
+          const response = await authApi.updateProfile(userData);
+
+          const updatedUser = { ...user, ...response.data };
+          setUser(updatedUser);
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+
+          setProfileData(prevData => ({
+              ...prevData,
+              avatar: response.data.avatar || prevData.avatar,
+          }));
+          setProfilePicPreview(response.data.avatar || profilePicPreview);
+
+          setSuccess('Profile updated successfully!');
         } catch (err) {
           setError("Failed to update profile. Please try again.");
           console.error("Error updating profile:", err);
@@ -242,12 +288,11 @@ const OrganizerDashboard = (({user}) => {
           return;
         }
         
+        setProfilePicFile(file); // Păstrează fișierul original
+
         const reader = new FileReader();
         reader.onload = (event) => {
-          setProfileData(prevData => ({
-            ...prevData,
-            avatar: event.target.result
-          }));
+          setProfilePicPreview(event.target.result);
         };
         reader.readAsDataURL(file);
     };
@@ -364,9 +409,9 @@ const OrganizerDashboard = (({user}) => {
               <div className="bg-white shadow rounded-lg overflow-hidden">
                 <div className="flex flex-col items-center p-6">
                   <div className="relative group">
-                                {profileData.avatar ? (
+                                {profilePicPreview ? (
                                 <img 
-                                    src={profileData.avatar} 
+                                    src={profilePicPreview} 
                                     alt={`${user.firstname} ${user.lastname}`} 
                                     className="h-24 w-24 rounded-full object-cover border-2 border-white shadow-md"
                                 />

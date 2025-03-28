@@ -131,6 +131,8 @@ export const updateProfile = async (req, res) => {
             }
         }
 
+        console.log("Imagine: ", req.file);
+        
         // Handle the profile picture if uploaded
         let profilePicUrl = undefined;
         if (req.file) {

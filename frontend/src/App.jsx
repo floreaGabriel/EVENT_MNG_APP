@@ -105,7 +105,7 @@ function App() {
               </ProtectedRoute>} />
             <Route path='/profile-organizer' element={
               <ProtectedRoute user = {user}>
-                <OrganizerDashboard user={user}/>
+                <OrganizerDashboard user={user} setUser={setUser}/>
               </ProtectedRoute>} />
 
               <Route path="/event/:eventId/registrations" element={

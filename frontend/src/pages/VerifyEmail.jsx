@@ -67,7 +67,13 @@ const VerifyEmail = ({ setUser }) => {
       }
 
       setTimeout(() => {
-        navigate('/'); // Redirecționează către pagina principală
+        // Verifică tipul utilizatorului și redirecționează în consecință
+        const userRole = response.data.role; // Sau response.data.isOrganizer
+        if (userRole === 'ORGANIZER' || response.data.isOrganizer === true) {
+          navigate('/profile-participant');
+        } else {
+          navigate('/profile-organizer');
+        }
       }, 3000);
     } catch (error) {
       setError(error.message || 'Failed to verify email. Please try again.');
