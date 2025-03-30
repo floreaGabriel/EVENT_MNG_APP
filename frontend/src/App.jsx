@@ -3,6 +3,7 @@ import './App.css'
 import Navbar from './components/Navbar'
 import { useState, useEffect } from 'react'
 import ProtectedRoute from './components/ProtectedRoute'
+import { NotificationsProvider } from './context/NotificationsContext'
 
 // pages
 import Home from './pages/Home'
@@ -17,6 +18,7 @@ import EventRegistrations from './pages/EventRegistrations'
 import ForgotPassword from './pages/ForgotPassword'
 import VerifyEmail from './pages/VerifyEmail'
 import OrganizerStats from './pages/OrganizerStats'
+import Notifications from './pages/Notifications'
 
 function App() {
   const [user, setUser] = useState(null);
@@ -71,57 +73,63 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen flex flex-col">
-        <Navbar user={user} setUser={setUser} />
-        <main className="flex-grow">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login setUser={setUser} />} />
-            <Route path="/events" element={<Events />} />
-            <Route path="/events/:id" element={<EventDetails user={user} />} />
-            <Route path="/register" element={<Register setUser={setUser} />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/verify-email" element={<VerifyEmail setUser={setUser}/>} />
-            <Route path="/organizer-stats" element={<OrganizerStats />} />
-            {/* 
-            <Route path="/events/:id" element={<EventDetails />} />
-            <Route path="/categories" element={<Categories />} />
-            <Route path="/register" element={<Register setUser={setUser} />} />
-            <Route path="/profile" element={<Profile user={user} setUser={setUser} />} />
-            <Route path="/create-event" element={<CreateEvent user={user} />} />
-            <Route path="/my-events" element={<MyEvents user={user} />} />
-            <Route path="*" element={<NotFound />} />
-            <Route  path='/profile' element={<Profile />} />
-             */}
+      <NotificationsProvider>
+        <div className="min-h-screen flex flex-col">
+          <Navbar user={user} setUser={setUser} />
+          <main className="flex-grow">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login setUser={setUser} />} />
+              <Route path="/events" element={<Events />} />
+              <Route path="/events/:id" element={<EventDetails user={user} />} />
+              <Route path="/register" element={<Register setUser={setUser} />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/verify-email" element={<VerifyEmail setUser={setUser}/>} />
+              <Route path="/organizer-stats" element={<OrganizerStats />} />
+              {/* 
+              <Route path="/events/:id" element={<EventDetails />} />
+              <Route path="/categories" element={<Categories />} />
+              <Route path="/register" element={<Register setUser={setUser} />} />
+              <Route path="/profile" element={<Profile user={user} setUser={setUser} />} />
+              <Route path="/create-event" element={<CreateEvent user={user} />} />
+              <Route path="/my-events" element={<MyEvents user={user} />} />
+              <Route path="*" element={<NotFound />} />
+              <Route  path='/profile' element={<Profile />} />
+               */}
 
-            {/** Protected routes */}
-            <Route path='/create-event' element= {
-              <ProtectedRoute user={user}>
-                <CreateEvent user={user}/>
-              </ProtectedRoute>} />
-            <Route path='/profile-participant' element={
-              <ProtectedRoute user = {user}>
-                <ParticipantDashboard user={user}/>
-              </ProtectedRoute>} />
-            <Route path='/profile-organizer' element={
-              <ProtectedRoute user = {user}>
-                <OrganizerDashboard user={user} setUser={setUser}/>
-              </ProtectedRoute>} />
+              {/** Protected routes */}
+              <Route path='/create-event' element= {
+                <ProtectedRoute user={user}>
+                  <CreateEvent user={user}/>
+                </ProtectedRoute>} />
+              <Route path='/profile-participant' element={
+                <ProtectedRoute user = {user}>
+                  <ParticipantDashboard user={user}/>
+                </ProtectedRoute>} />
+              <Route path='/profile-organizer' element={
+                <ProtectedRoute user = {user}>
+                  <OrganizerDashboard user={user} setUser={setUser}/>
+                </ProtectedRoute>} />
 
-              <Route path="/event/:eventId/registrations" element={
-                  <ProtectedRoute user={user}>
-                    <EventRegistrations user={user} />
-                  </ProtectedRoute> } />
-          </Routes>
+                <Route path="/event/:eventId/registrations" element={
+                    <ProtectedRoute user={user}>
+                      <EventRegistrations user={user} />
+                    </ProtectedRoute> } />
+              <Route path="/notifications" element={
+                <ProtectedRoute user={user}>
+                  <Notifications />
+                </ProtectedRoute>} />
+            </Routes>
 
 
-        </main>
-        <footer className="bg-gray-800 text-white py-6">
-          <div className="max-w-7xl mx-auto px-4">
-            <p className="text-center">© 2025 EventHub. All rights reserved.</p>
-          </div>
-        </footer>
-      </div>
+          </main>
+          <footer className="bg-gray-800 text-white py-6">
+            <div className="max-w-7xl mx-auto px-4">
+              <p className="text-center">© 2025 EventHub. All rights reserved.</p>
+            </div>
+          </footer>
+        </div>
+      </NotificationsProvider>
     </Router>
   );
 };

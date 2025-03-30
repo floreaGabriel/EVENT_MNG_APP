@@ -1,6 +1,8 @@
 import Event from '../models/event.model.js';
 import User from '../models/user.model.js';
 import cloudinary from 'cloudinary';
+import { createNotification, deleteEventNotifications } from './notifications.controller.js';
+import Registration from '../models/registration.model.js';
 
 export const getEvents = async (req, res) => {
     try {
@@ -246,28 +248,28 @@ export const getEventById = async (req, res) => {
 
 export const updateEvent = async (req, res) => {
     try {
-        const {id: eventId} = req.params;
+        const { id } = req.params;
         const userId = req.user._id;
 
-        console.log("Id event: ", eventId);
+        console.log("Id event: ", id);
         //console.log("User id: " , userId);
 
     
-        const event = await Event.findById(eventId);
-        if (!event) {
+        const existingEvent = await Event.findById(id);
+        if (!existingEvent) {
             return res.status(404).json({ 
               success: false, 
               message: 'Event not found' 
             });
         }
 
-        console.log("Organizator ID: ", event.organizer);
+        console.log("Organizator ID: ", existingEvent.organizer);
         console.log("Utilizator ID: ", userId);
-        console.log("Sunt egale?", event.organizer.toString() === userId.toString());
+        console.log("Sunt egale?", existingEvent.organizer.toString() === userId.toString());
         
-        //console.log("event gasit: ", event);
+        //console.log("event gasit: ", existingEvent);
         // verificam daca useru curent este organziatorul evenimentului
-        if (event.organizer.toString() !== userId.toString()) {
+        if (existingEvent.organizer.toString() !== userId.toString()) {
             return res.status(403).json({ 
                 success: false, 
                 message: 'You can only update your own events' 
@@ -290,26 +292,45 @@ export const updateEvent = async (req, res) => {
         console.log("se face update la event");
         // new: true -> returneaza noul obiect modificat, nu cel original
         const updatedEvent = await Event.findByIdAndUpdate(
-            eventId,
+            id,
             updatedData,
             { new: true}
         );
         console.log("s-a facut update la event");
+
+        // Dacă evenimentul este publicat, trimite notificări participanților despre actualizare
+        if (updatedEvent.status === 'PUBLISHED') {
+            // Găsește toți participanții înregistrați la acest eveniment
+            const registrations = await Registration.find({ 
+                event: id, 
+                status: { $in: ['CONFIRMED', 'PENDING'] } 
+            });
+            
+            // Trimite notificări tuturor participanților
+            for (const registration of registrations) {
+                await createNotification(
+                    registration.attendee,
+                    'event_update',
+                    `Evenimentul "${updatedEvent.title}" la care participi a fost actualizat.`,
+                    id
+                );
+            }
+        }
+
         res.status(200).json({ 
             success: true, 
             message: 'Event updated successfully', 
             data: updatedEvent 
-          });
-
+        });
     } catch (error) {
-        console.log("Eroare in functia updateEvent");
+        console.error('Error in updateEvent:', error);
         res.status(500).json({ 
             success: false, 
             message: 'Failed to update event', 
             error: error.message 
         });
     }
-}
+};
 
 export const toggleSaveEvent = async (req, res) => {
     try {
@@ -406,35 +427,59 @@ export const checkSavedEvent = async (req, res) => {
 };
 
 export const deleteEvent = async (req, res) => {
-
     try {
-        const {id:eventId}= req.params;
+        const { id } = req.params;
         const userId = req.user._id;
 
-        const event = await Event.findById(eventId);
+        // Găsește evenimentul
+        const event = await Event.findById(id);
+        
         if (!event) {
             return res.status(404).json({
                 success: false,
-                message: "Event not found"
-            })
+                message: 'Event not found'
+            });
         }
-
-        // verificam daca userul curent este organizatorul evenimentului
-
-        if (event.organizer.toString() != userId.toString()) {
+        
+        // Verifică dacă utilizatorul este organizatorul evenimentului
+        if (event.organizer.toString() !== userId.toString()) {
             return res.status(403).json({
                 success: false,
-                message: "You are not the organizer of this event"
-            })
+                message: 'You can only delete your own events'
+            });
         }
-
-        await Event.findByIdAndDelete(eventId);
-
+        
+        // Găsește toți participanții înregistrați la acest eveniment
+        const registrations = await Registration.find({ 
+            event: id, 
+            status: { $in: ['CONFIRMED', 'PENDING'] } 
+        });
+        
+        // Trimite notificări tuturor participanților despre ștergerea evenimentului
+        for (const registration of registrations) {
+            await createNotification(
+                registration.attendee,
+                'event_update',
+                `Evenimentul "${event.title}" la care participai a fost anulat de organizator.`,
+                null  // Nu mai includem ID-ul evenimentului deoarece va fi șters
+            );
+        }
+        
+        // Șterge toate notificările asociate acestui eveniment
+        await deleteEventNotifications(id);
+        
+        // Șterge toate înregistrările pentru acest eveniment
+        await Registration.deleteMany({ event: id });
+        
+        // Șterge evenimentul din Cloudinary dacă există imagine
         if (event.media && event.media.coverImage) {
             const publicId = event.media.coverImage.split('/').pop().split('.')[0]; // Extragem publicId din URL
             await cloudinary.uploader.destroy(`events/${publicId}`);
         }
-
+        
+        // Șterge evenimentul
+        await Event.findByIdAndDelete(id);
+        
         res.status(200).json({
             success: true,
             message: 'Event deleted successfully'
@@ -447,4 +492,4 @@ export const deleteEvent = async (req, res) => {
             error: error.message
         });
     }
-}
+};

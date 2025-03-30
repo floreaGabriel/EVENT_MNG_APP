@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.route.js';
 import eventsRoute from './routes/events.route.js';
 import registrationRoute from './routes/registration.route.js'
 import statsRoute from './routes/stats.route.js'
+import notificationsRoute from './routes/notifications.route.js';
 
 
 dotenv.config();
@@ -45,6 +46,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/events", eventsRoute);
 app.use("/api/registrations", registrationRoute);
 app.use("/api/stats", statsRoute);
+app.use("/api/notifications", notificationsRoute);
 
 app.listen(5001, () => {
     connectDB();

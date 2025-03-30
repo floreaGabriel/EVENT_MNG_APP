@@ -251,7 +251,29 @@ export const registrationsApi = {
 
 }
 
+export const notificationsApi = {
+  // Obține toate notificările pentru utilizatorul curent
+  getNotifications: () =>
+    fetchApi('/notifications'),
 
+  // Marchează o notificare ca citită
+  markAsRead: (notificationId) =>
+    fetchApi(`/notifications/${notificationId}/read`, {
+      method: 'PUT'
+    }),
+
+  // Marchează toate notificările ca citite
+  markAllAsRead: () =>
+    fetchApi('/notifications/read-all', {
+      method: 'PUT'
+    }),
+
+  // Șterge o notificare
+  deleteNotification: (notificationId) =>
+    fetchApi(`/notifications/${notificationId}`, {
+      method: 'DELETE'
+    }),
+};
 
 // Export the raw fetchApi for custom calls
 export { fetchApi };
@@ -261,5 +283,6 @@ export default {
   auth: authApi,
   events: eventsApi,
   registrations: registrationsApi,
+  notifications: notificationsApi,
   fetch: fetchApi
 };

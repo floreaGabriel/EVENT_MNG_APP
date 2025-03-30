@@ -1,11 +1,10 @@
 import Registration from "../models/registration.model.js";
 import Event from "../models/event.model.js";
 import User from "../models/user.model.js";
+import { createNotification } from "./notifications.controller.js";
 
 export const registerForEvent = async (req, res) => {
     try {
-
-
         console.log("REGISTER FOR EVENT");
         const userId = req.user._id;
         const { eventId, ticketType, quantity = 1} = req.body;
@@ -18,7 +17,6 @@ export const registerForEvent = async (req, res) => {
         }
 
         // verificam daca evenimentul exista
-
         const event = await Event.findById(eventId);
 
         if (!event) {
@@ -28,7 +26,6 @@ export const registerForEvent = async (req, res) => {
             });
         }
 
-
         // verifica daca este publicat
         if (event.status != 'PUBLISHED') {
             return res.status(404).json({
@@ -37,9 +34,7 @@ export const registerForEvent = async (req, res) => {
             });
         }
 
-
         // verificam daca evenimentul a fost in trecut 
-
         if (new Date(event.dates.start) < new Date()) {
             return res.status(400).json({
                 success: false,
@@ -57,7 +52,6 @@ export const registerForEvent = async (req, res) => {
         }
 
         // verificam daca este valabil ticketul 
-
         if (selectedTicket.availableQuantity !== undefined && selectedTicket.availableQuantity < quantity) {
             return res.status(400).json({
                 success: false,
@@ -65,11 +59,13 @@ export const registerForEvent = async (req, res) => {
             });
         }
 
-
         // calculam pretul total
-
         let totalPrice = selectedTicket.price * quantity;
         const currency = selectedTicket.currency;
+
+        // Obținem datele utilizatorului pentru a le include în notificare
+        const user = await User.findById(userId).select('firstname lastname username');
+        const userName = user ? `${user.firstname} ${user.lastname}` : 'Un utilizator';
 
         const existingRegistration = await Registration.findOne({
             event: eventId,
@@ -78,7 +74,6 @@ export const registerForEvent = async (req, res) => {
 
         // daca exista deja o inregistrare nu te mai poti inregistra
         if (existingRegistration) {
-            
             console.log("Exista deja inregistrarea...", existingRegistration);
 
             if (existingRegistration.status === 'CANCELLED') {
@@ -96,15 +91,29 @@ export const registerForEvent = async (req, res) => {
                     await event.save();
                 }
 
-
                 event.currentAttendees = (event.currentAttendees || 0) + quantity;
                 await event.save();
 
                 if (event.pricing.isFree) {
                     existingRegistration.status = 'CONFIRMED';
-                    await existingRegistration.save();  
-                }
+                    await existingRegistration.save();
+                    
+                    // Adăugare notificare pentru confirmare înregistrare (participant)
+                    await createNotification(
+                        userId,
+                        'participation_confirmed',
+                        `Participarea ta la evenimentul "${event.title}" a fost confirmată.`,
+                        eventId
+                    );
 
+                    // Adăugare notificare pentru organizator
+                    await createNotification(
+                        event.organizer,
+                        'event_update',
+                        `${userName} și-a reconfirmat participarea la evenimentul tău "${event.title}".`,
+                        eventId
+                    );
+                }
 
                 console.log("Inregistrarea a fost updatata...", existingRegistration);
 
@@ -119,11 +128,9 @@ export const registerForEvent = async (req, res) => {
                     message: 'You are already registered for this event'
                 });
             }
-
         }
 
         // atunci cream inregistrarea 
-
         console.log("Cream inregistrarea...");
 
         const registration = new Registration({
@@ -148,7 +155,6 @@ export const registerForEvent = async (req, res) => {
         event.currentAttendees = (event.currentAttendees || 0) + quantity;
         await event.save();
 
-
         if (event.pricing.isFree) {
             registration.status = 'CONFIRMED';
             await registration.save();
@@ -156,6 +162,38 @@ export const registerForEvent = async (req, res) => {
             await User.findByIdAndUpdate(userId, {
                 $addToSet: { 'participantProfile.attendedEvents': eventId }
             });
+            
+            // Adăugare notificare pentru confirmare înregistrare (participant)
+            await createNotification(
+                userId,
+                'participation_confirmed',
+                `Participarea ta la evenimentul "${event.title}" a fost confirmată.`,
+                eventId
+            );
+            
+            // Adăugare notificare pentru organizator - înregistrare confirmată
+            await createNotification(
+                event.organizer,
+                'event_update',
+                `${userName} s-a înscris la evenimentul tău "${event.title}" și participarea a fost confirmată automat.`,
+                eventId
+            );
+        } else {
+            // Adăugare notificare pentru înregistrare în așteptare (participant)
+            await createNotification(
+                userId,
+                'event_invite',
+                `Te-ai înregistrat cu succes la evenimentul "${event.title}". Plata este în așteptare.`,
+                eventId
+            );
+            
+            // Adăugare notificare pentru organizator - înregistrare în așteptare
+            await createNotification(
+                event.organizer,
+                'event_update',
+                `${userName} s-a înscris la evenimentul tău "${event.title}" și așteaptă confirmarea.`,
+                eventId
+            );
         }
 
         res.status(201).json({
@@ -205,19 +243,19 @@ export const getUserRegistrations = async (req, res) => {
 
 export const cancelRegistration = async (req, res) => {
     try {
-
         console.log("Cancelling registration...");
 
         const userId = req.user._id;
         const { registrationId } = req.params;
 
-        const registration = await Registration.findById(registrationId);
+        const registration = await Registration.findById(registrationId)
+            .populate('event', 'title organizer');
+            
         if (!registration) {
             return res.status(404).json({
                 success: false,
                 message: 'Registration not found'
             });
-        
         }
 
         // Verify the registration belongs to the user
@@ -227,6 +265,10 @@ export const cancelRegistration = async (req, res) => {
                 message: 'Unauthorized to cancel this registration'
             });
         }
+
+        // Obținem datele utilizatorului pentru a le include în notificare
+        const user = await User.findById(userId).select('firstname lastname username');
+        const userName = user ? `${user.firstname} ${user.lastname}` : 'Un utilizator';
 
         // Update registration status
         registration.status = 'CANCELLED';
@@ -239,7 +281,6 @@ export const cancelRegistration = async (req, res) => {
         // Update event's current attendees count
         const event = await Event.findById(registration.event);
         if (event) {
-
             console.log("Current attendees: ", event.currentAttendees);
             event.currentAttendees = Math.max(0, (event.currentAttendees || 0) - registration.quantity);
             console.log("Verific daca s-a sters in functia cancel...");
@@ -251,6 +292,14 @@ export const cancelRegistration = async (req, res) => {
             }
             
             await event.save();
+            
+            // Adăugare notificare pentru organizator despre anularea participării
+            await createNotification(
+                event.organizer,
+                'event_update',
+                `${userName} și-a anulat participarea la evenimentul tău "${event.title}".`,
+                event._id
+            );
         }
 
         res.status(200).json({
@@ -359,8 +408,6 @@ export const getEventRegistrations = async (req, res) => {
 
 export const updateRegistrationStatus = async (req, res) => {
     try {
-
-
         console.log("Update registration...");
 
         const {registrationId} = req.params;
@@ -377,7 +424,9 @@ export const updateRegistrationStatus = async (req, res) => {
           }
       
           // Find the registration
-          const registration = await Registration.findById(registrationId);
+          const registration = await Registration.findById(registrationId)
+            .populate('event', 'title organizer capacity currentAttendees pricing dates')
+            .populate('attendee', 'email firstname lastname username');
           if (!registration) {
             return res.status(404).json({
               success: false,
@@ -388,10 +437,10 @@ export const updateRegistrationStatus = async (req, res) => {
         //console.log("event id: ", registration.event);
         
           // Verify the organizer owns this event
-          const event = await Event.findById(registration.event);
-          //console.log("event organizer id: ", event.organizer.toString());
-        //console.log("organizer id: ", organizerId.toString());
-          if (!event || event.organizer.toString() !== organizerId.toString()) {
+          const event = registration.event;
+          
+          // Verificăm dacă event.organizer există
+          if (!event || !event.organizer || event.organizer.toString() !== organizerId.toString()) {
             return res.status(403).json({
               success: false,
               message: 'Unauthorized: You can only manage registrations for your own events'
@@ -401,12 +450,17 @@ export const updateRegistrationStatus = async (req, res) => {
           //console.log("Status inainte: ", registration.status);
 
           // Update the registration status
+          const oldStatus = registration.status;
           registration.status = status;
 
           //console.log("Status dupa: ", registration.status);
           
+          const attendeeName = registration.attendee ? 
+            `${registration.attendee.firstname} ${registration.attendee.lastname}` : 
+            'Participantul';
+          
           // Handle ticket inventory and attendee count
-          if (status === 'CANCELLED' && registration.status !== 'CANCELLED') {
+          if (status === 'CANCELLED' && oldStatus !== 'CANCELLED') {
             // If cancelling a previously confirmed registration
             event.currentAttendees = Math.max(0, (event.currentAttendees || 0) - registration.quantity);
             
@@ -420,6 +474,38 @@ export const updateRegistrationStatus = async (req, res) => {
             if (registration.paymentStatus === 'PAID') {
               registration.paymentStatus = 'REFUNDED';
             }
+            
+            // Adăugare notificare pentru anulare participare (pentru participant)
+            await createNotification(
+                registration.attendee._id,
+                'event_update',
+                `Participarea ta la evenimentul "${event.title}" a fost anulată de organizator.`,
+                event._id
+            );
+            
+            // Notificare pentru organizator despre acțiunea proprie
+            await createNotification(
+                organizerId,
+                'event_update',
+                `Ai anulat participarea lui ${attendeeName} la evenimentul "${event.title}".`,
+                event._id
+            );
+          } else if (status === 'CONFIRMED' && oldStatus !== 'CONFIRMED') {
+            // Adăugare notificare pentru confirmare participare (pentru participant)
+            await createNotification(
+                registration.attendee._id,
+                'participation_confirmed',
+                `Participarea ta la evenimentul "${event.title}" a fost confirmată de organizator.`,
+                event._id
+            );
+            
+            // Notificare pentru organizator despre acțiunea proprie
+            await createNotification(
+                organizerId,
+                'event_update',
+                `Ai confirmat participarea lui ${attendeeName} la evenimentul "${event.title}".`,
+                event._id
+            );
           }
           
           await registration.save();
