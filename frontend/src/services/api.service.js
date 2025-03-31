@@ -275,6 +275,22 @@ export const notificationsApi = {
     }),
 };
 
+export const paymentsApi = {
+  // Procesează o plată simulată
+  processPayment: (registrationId, cardDetails) =>
+    fetchApi('/payments/process', {
+      method: 'POST',
+      body: {
+        registrationId,
+        cardDetails
+      }
+    }),
+
+  // Obține statusul plății pentru o înregistrare
+  getPaymentStatus: (registrationId) =>
+    fetchApi(`/payments/status/${registrationId}`)
+};
+
 // Export the raw fetchApi for custom calls
 export { fetchApi };
 
@@ -284,5 +300,6 @@ export default {
   events: eventsApi,
   registrations: registrationsApi,
   notifications: notificationsApi,
+  payments: paymentsApi,
   fetch: fetchApi
 };

@@ -265,6 +265,9 @@ export const cancelRegistration = async (req, res) => {
                 message: 'Unauthorized to cancel this registration'
             });
         }
+        
+        
+
 
         // Obținem datele utilizatorului pentru a le include în notificare
         const user = await User.findById(userId).select('firstname lastname username');

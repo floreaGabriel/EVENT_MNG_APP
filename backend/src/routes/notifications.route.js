@@ -9,6 +9,7 @@ import { protectedRoute } from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
 
+// Adăugăm middleware-ul protectedRoute pentru fiecare rută individual, nu global cu router.use()
 // Rută pentru obținerea tuturor notificărilor utilizatorului
 router.get('/', protectedRoute, getUserNotifications);
 

@@ -86,17 +86,7 @@ function App() {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/verify-email" element={<VerifyEmail setUser={setUser}/>} />
               <Route path="/organizer-stats" element={<OrganizerStats />} />
-              {/* 
-              <Route path="/events/:id" element={<EventDetails />} />
-              <Route path="/categories" element={<Categories />} />
-              <Route path="/register" element={<Register setUser={setUser} />} />
-              <Route path="/profile" element={<Profile user={user} setUser={setUser} />} />
-              <Route path="/create-event" element={<CreateEvent user={user} />} />
-              <Route path="/my-events" element={<MyEvents user={user} />} />
-              <Route path="*" element={<NotFound />} />
-              <Route  path='/profile' element={<Profile />} />
-               */}
-
+              
               {/** Protected routes */}
               <Route path='/create-event' element= {
                 <ProtectedRoute user={user}>
@@ -110,18 +100,15 @@ function App() {
                 <ProtectedRoute user = {user}>
                   <OrganizerDashboard user={user} setUser={setUser}/>
                 </ProtectedRoute>} />
-
-                <Route path="/event/:eventId/registrations" element={
-                    <ProtectedRoute user={user}>
-                      <EventRegistrations user={user} />
-                    </ProtectedRoute> } />
+              <Route path="/event/:eventId/registrations" element={
+                <ProtectedRoute user={user}>
+                  <EventRegistrations user={user} />
+                </ProtectedRoute>} />
               <Route path="/notifications" element={
                 <ProtectedRoute user={user}>
                   <Notifications />
                 </ProtectedRoute>} />
             </Routes>
-
-
           </main>
           <footer className="bg-gray-800 text-white py-6">
             <div className="max-w-7xl mx-auto px-4">

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { eventsApi, registrationsApi } from '../services/api.service';
+import { eventsApi, registrationsApi, paymentsApi } from '../services/api.service';
 import GoogleMap from '../components/GoogleMap';
+import PaymentModal from '../components/PaymentModal';
 
 const EventDetails = ({ user }) => {
   const { id } = useParams();
@@ -19,6 +20,10 @@ const EventDetails = ({ user }) => {
   const [registrationError, setRegistrationError] = useState('');
   const [ticketQuantity, setTicketQuantity] = useState(1);
   const [cancelling, setCancelling] = useState(false);
+  // Stare pentru modalul de plată
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+
   // Fetch event details when component mounts
   useEffect(() => {
     const fetchEventDetails = async () => {
@@ -205,6 +210,164 @@ const EventDetails = ({ user }) => {
     });
   };
 
+  // Funcție pentru deschiderea modalului de plată
+  const handlePayClick = () => {
+    setShowPaymentModal(true);
+  };
+
+  // Funcție pentru închiderea modalului de plată
+  const handleClosePaymentModal = () => {
+    setShowPaymentModal(false);
+  };
+
+  // Funcție pentru gestionarea succesului plății
+  const handlePaymentSuccess = (paymentData) => {
+    console.log('Payment successful:', paymentData);
+    setPaymentSuccess(true);
+    setShowPaymentModal(false);
+    
+    // Actualizează datele de înregistrare și statusul
+    setRegistrationData(prevData => ({
+      ...prevData,
+      paymentStatus: 'PAID',
+      status: 'CONFIRMED'
+    }));
+    setRegistrationStatus('CONFIRMED');
+
+    // Reîncarcă datele de înregistrare pentru a fi sigur că avem cele mai recente informații
+    checkRegistrationStatus();
+  };
+
+  // Funcție pentru verificarea statusului înregistrării
+  const checkRegistrationStatus = async () => {
+    // daca nu exista un user sau un event return... 
+    if (!user || !event) return;
+
+    try {
+      const response = await registrationsApi.checkRegistrationStatus(id);
+      if (response.isRegistered) {
+        setRegistrationStatus(response.status);
+        setRegistrationData(response.data);
+        setRegistrationSuccess(true);
+      }
+    } catch (error) {
+      console.error('Error checking registration status:', error);
+    }
+  };
+
+  // Adaugă această funcție pentru a genera butonul de acțiune bazat pe statusul înregistrării și plății
+  const renderActionButton = () => {
+    if (!user) {
+      return (
+        <button
+          onClick={handleRegister}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md"
+        >
+          Înregistrează-te
+        </button>
+      );
+    }
+
+    if (event?.organizer?._id === user._id) {
+      return (
+        <Link
+          to={`/event/${id}/registrations`}
+          className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md inline-block"
+        >
+          Gestionează înregistrările
+        </Link>
+      );
+    }
+
+    if (!registrationSuccess) {
+      return (
+        <button
+          onClick={handleRegister}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md"
+        >
+          Înregistrează-te
+        </button>
+      );
+    }
+
+    if (registrationStatus === 'CANCELLED') {
+      return (
+        <button
+          onClick={handleRegister}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md"
+        >
+          Înregistrează-te din nou
+        </button>
+      );
+    }
+
+    if (registrationStatus === 'CONFIRMED') {
+      // Verifică dacă este nevoie de plată
+      if (registrationData?.paymentStatus === 'UNPAID' && !event?.pricing?.isFree) {
+        return (
+          <div className="flex flex-col space-y-2">
+            <button
+              onClick={handlePayClick}
+              className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md"
+            >
+              Plătește acum
+            </button>
+            <button
+              onClick={handleCancelRegistration}
+              disabled={cancelling}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md"
+            >
+              {cancelling ? 'Se anulează...' : 'Anulează înregistrarea'}
+            </button>
+          </div>
+        );
+      }
+      
+      return (
+        <div className="flex flex-col space-y-2">
+          <div className="bg-green-100 text-green-800 p-3 rounded-lg">
+            {registrationData?.paymentStatus === 'PAID' 
+              ? 'Ești înregistrat și ai plătit pentru acest eveniment!' 
+              : 'Ești înregistrat pentru acest eveniment!'}
+          </div>
+          <button
+            onClick={handleCancelRegistration}
+            disabled={cancelling}
+            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md"
+          >
+            {cancelling ? 'Se anulează...' : 'Anulează înregistrarea'}
+          </button>
+        </div>
+      );
+    }
+
+    if (registrationStatus === 'PENDING') {
+      return (
+        <div className="flex flex-col space-y-2">
+          <div className="bg-yellow-100 text-yellow-800 p-3 rounded-lg">
+            Înregistrarea ta este în așteptarea confirmării organizatorului.
+          </div>
+          <button
+            onClick={handleCancelRegistration}
+            disabled={cancelling}
+            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md"
+          >
+            {cancelling ? 'Se anulează...' : 'Anulează înregistrarea'}
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <button
+        onClick={handleRegister}
+        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md"
+      >
+        Înregistrează-te
+      </button>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -383,7 +546,7 @@ const EventDetails = ({ user }) => {
                   <div className="flex items-start">
                     <div className="bg-blue-100 rounded-full p-2 mr-4">
                       <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                       </svg>
                     </div>
                     <div>
@@ -565,64 +728,7 @@ const EventDetails = ({ user }) => {
               
               {/* Registration Button */}
               
-              {registrationSuccess ? (
-                <div className="mb-4 p-4 border border-blue-200 rounded-md bg-green-50">
-                  <p className="text-green-500 font-medium text-center">
-                    {registrationStatus === 'CONFIRMED' &&
-                      'You are registered for this event.' }
-                  </p>
-                  <p className="text-red-500 font-medium text-center">
-                    {registrationStatus === 'CANCELLED' ? 
-                      'Your registration has been cancelled.' :
-                      'Your registration is pending.'}
-                  </p>
-                  {registrationStatus === 'CONFIRMED' && (
-                    <p className="text-sm text-green-600 text-center mt-2">
-                      We'll send your ticket details to your email
-                    </p>
-                  )}
-                  {registrationStatus === 'PENDING' && (
-                    <p className="text-sm text-green-600 text-center mt-2">
-                      Your registration is being processed
-                    </p>
-                  )}
-                  {(registrationStatus === 'CONFIRMED' || registrationStatus === 'PENDING') && (
-                    <button
-                      onClick={handleCancelRegistration}
-                      disabled={cancelling}
-                      className="mt-3 w-full bg-white border border-red-300 text-red-500 hover:bg-red-50 font-medium py-2 px-4 rounded-md disabled:opacity-50"
-                    >
-                      {cancelling ? 'Cancelling...' : 'Cancel Registration'}
-                    </button>
-                  )}
-                  {registrationStatus === 'CANCELLED' && (
-                    <button
-                      onClick={handleRegister}
-                      className="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md"
-                    >
-                      Register Again
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <button
-                  onClick={handleRegister}
-                  disabled={registering}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {registering ? (
-                    <span className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Processing...
-                    </span>
-                  ) : (
-                    'Register for this Event'
-                  )}
-                </button>
-              )}
+              {renderActionButton()}
               
               {/* Login Reminder */}
               {!user && (
@@ -707,32 +813,14 @@ const EventDetails = ({ user }) => {
         </div>
       </div>
       
-      {/* Login Modal */}
-      {showLoginModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowLoginModal(false)}>
-          <div className="bg-white rounded-lg p-8 max-w-md w-full" onClick={e => e.stopPropagation()}>
-            <h2 className="text-2xl font-bold mb-4">Login Required</h2>
-            <p className="mb-6">You need to be logged in to register for events.</p>
-            <div className="flex space-x-4">
-              <button
-                onClick={() => {
-                  navigate('/login', { state: { from: `/events/${id}` } });
-                }}
-                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
-              >
-                Log In
-              </button>
-              <button
-                onClick={() => {
-                  navigate('/register', { state: { from: `/events/${id}` } });
-                }}
-                className="flex-1 border border-blue-600 text-blue-600 py-2 px-4 rounded hover:bg-blue-50"
-              >
-                Register
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Payment Modal */}
+      {registrationData && (
+        <PaymentModal
+          registration={registrationData}
+          isOpen={showPaymentModal}
+          onClose={handleClosePaymentModal}
+          onSuccess={handlePaymentSuccess}
+        />
       )}
     </div>
   );

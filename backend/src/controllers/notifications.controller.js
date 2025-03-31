@@ -206,4 +206,4 @@ export const deleteEventNotifications = async (eventId) => {
     console.error('Error deleting event notifications:', error);
     throw error;
   }
-}; 
+};
