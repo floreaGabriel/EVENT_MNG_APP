@@ -12,6 +12,7 @@ const Register = ({ setUser }) => {
     username: "",
     roles: ["PARTICIPANT"], // Implicit participant
     status: "ACTIVE",
+    adminCode: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -20,6 +21,9 @@ const Register = ({ setUser }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isOrganizer, setIsOrganizer] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const ADMIN_SECRET_CODE = "2222"; // Codul secret pentru crearea unui cont de admin
+  
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -50,12 +54,34 @@ const Register = ({ setUser }) => {
   const handleOrganizerChange = (e) => {
     const isChecked = e.target.checked;
     setIsOrganizer(isChecked);
+    setIsAdmin(false); // Dezactivează opțiunea de admin când se selectează organizator
 
     // Setează rolul exclusiv: doar PARTICIPANT sau doar ORGANIZER
     setFormData((prev) => ({
       ...prev,
       roles: isChecked ? ["ORGANIZER"] : ["PARTICIPANT"],
+      adminCode: "",
     }));
+  };
+
+  const handleAdminChange = (e) => {
+    const isChecked = e.target.checked;
+    setIsAdmin(isChecked);
+    setIsOrganizer(false); // Dezactivează opțiunea de organizator când se selectează admin
+
+    // Setează rolul exclusiv dacă se selectează admin
+    if (isChecked) {
+      setFormData((prev) => ({
+        ...prev,
+        roles: ["ADMIN"],
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        roles: ["PARTICIPANT"],
+        adminCode: "",
+      }));
+    }
   };
 
   const toggleShowPassword = () => {
@@ -105,6 +131,11 @@ const Register = ({ setUser }) => {
       newErrors.username = "Username must be at least 3 characters";
     }
 
+    // Admin code validation
+    if (isAdmin && formData.adminCode !== ADMIN_SECRET_CODE) {
+      newErrors.adminCode = "Invalid admin code";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -120,8 +151,8 @@ const Register = ({ setUser }) => {
     setRegisterError("");
   
     try {
-      // Remove confirmPassword before sending to the API
-      const { confirmPassword, ...submitData } = formData;
+      // Remove confirmPassword and adminCode before sending to the API
+      const { confirmPassword, adminCode, ...submitData } = formData;
   
       const data = await authApi.register(submitData);
   
@@ -257,7 +288,6 @@ const Register = ({ setUser }) => {
                   className={`appearance-none block w-full px-3 py-2 border ${
                     errors.username ? "border-red-300" : "border-gray-300"
                   } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                  placeholder="username123"
                 />
                 {errors.username && (
                   <p className="mt-2 text-sm text-red-600">{errors.username}</p>
@@ -282,20 +312,14 @@ const Register = ({ setUser }) => {
                   className={`appearance-none block w-full px-3 py-2 border ${
                     errors.password ? "border-red-300" : "border-gray-300"
                   } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                  placeholder="********"
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
                   onClick={toggleShowPassword}
                 >
                   {showPassword ? (
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -304,12 +328,7 @@ const Register = ({ setUser }) => {
                       />
                     </svg>
                   ) : (
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -329,9 +348,6 @@ const Register = ({ setUser }) => {
                   <p className="mt-2 text-sm text-red-600">{errors.password}</p>
                 )}
               </div>
-              <p className="mt-1 text-xs text-gray-500">
-                Password must be at least 8 characters long
-              </p>
             </div>
 
             {/* Confirm Password field */}
@@ -351,20 +367,14 @@ const Register = ({ setUser }) => {
                   className={`appearance-none block w-full px-3 py-2 border ${
                     errors.confirmPassword ? "border-red-300" : "border-gray-300"
                   } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                  placeholder="********"
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
                   onClick={toggleShowConfirmPassword}
                 >
                   {showConfirmPassword ? (
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -373,12 +383,7 @@ const Register = ({ setUser }) => {
                       />
                     </svg>
                   ) : (
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -400,30 +405,74 @@ const Register = ({ setUser }) => {
               </div>
             </div>
 
-            {/* User Type Checkbox */}
-            <div className="flex items-center">
-              <input
-                id="isOrganizer"
-                name="isOrganizer"
-                type="checkbox"
-                checked={isOrganizer}
-                onChange={handleOrganizerChange}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <label htmlFor="isOrganizer" className="ml-2 block text-sm text-gray-900">
-                Register as an event organizer
-              </label>
+            {/* Account type selection */}
+            <div className="flex flex-col space-y-3">
+              <div className="flex items-center">
+                <input
+                  id="isOrganizer"
+                  name="isOrganizer"
+                  type="checkbox"
+                  checked={isOrganizer}
+                  onChange={handleOrganizerChange}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="isOrganizer" className="ml-2 block text-sm text-gray-700">
+                  Register as Event Organizer
+                </label>
+              </div>
+              
+              <div className="flex items-center">
+                <input
+                  id="isAdmin"
+                  name="isAdmin"
+                  type="checkbox"
+                  checked={isAdmin}
+                  onChange={handleAdminChange}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="isAdmin" className="ml-2 block text-sm text-gray-700">
+                  Register as Administrator
+                </label>
+              </div>
             </div>
 
-            {/* Submit Button */}
+            {/* Admin code field - conditionally rendered */}
+            {isAdmin && (
+              <div>
+                <label htmlFor="adminCode" className="block text-sm font-medium text-gray-700">
+                  Admin Access Code
+                </label>
+                <div className="mt-1">
+                  <input
+                    id="adminCode"
+                    name="adminCode"
+                    type="password"
+                    value={formData.adminCode}
+                    onChange={handleChange}
+                    className={`appearance-none block w-full px-3 py-2 border ${
+                      errors.adminCode ? "border-red-300" : "border-gray-300"
+                    } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                    placeholder="Enter admin access code"
+                  />
+                  {errors.adminCode && (
+                    <p className="mt-2 text-sm text-red-600">{errors.adminCode}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+                  isLoading
+                    ? "bg-blue-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                }`}
               >
                 {isLoading ? (
-                  <span className="flex items-center">
+                  <>
                     <svg
                       className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
                       xmlns="http://www.w3.org/2000/svg"
@@ -445,9 +494,9 @@ const Register = ({ setUser }) => {
                       ></path>
                     </svg>
                     Creating account...
-                  </span>
+                  </>
                 ) : (
-                  "Create Account"
+                  "Create account"
                 )}
               </button>
             </div>

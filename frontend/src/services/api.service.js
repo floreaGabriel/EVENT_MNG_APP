@@ -291,6 +291,112 @@ export const paymentsApi = {
     fetchApi(`/payments/status/${registrationId}`)
 };
 
+// Adăugare nou API pentru administrarea utilizatorilor
+export const adminApi = {
+  // Obține toți utilizatorii cu opțiuni de filtrare și paginare
+  getUsers: (params = {}) => {
+    const queryString = Object.entries(params)
+      .filter(([_, value]) => value !== undefined && value !== '')
+      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+      .join('&');
+
+    return fetchApi(`/admin/users${queryString ? `?${queryString}` : ''}`);
+  },
+
+  // Obține un utilizator după ID
+  getUserById: (userId) => 
+    fetchApi(`/admin/users/${userId}`),
+  
+  // Creează un utilizator nou
+  createUser: (userData) => {
+    // Verificăm dacă există un fișier (profilePic)
+    const hasFile = userData.profilePic && userData.profilePic instanceof File;
+    
+    if (hasFile) {
+      // Dacă există un fișier, folosim FormData
+      const formData = new FormData();
+      
+      for (const [key, value] of Object.entries(userData)) {
+        if (key === 'profilePic' && value instanceof File) {
+          formData.append(key, value);
+        } else if (typeof value === 'object' && value !== null) {
+          formData.append(key, JSON.stringify(value));
+        } else {
+          formData.append(key, value);
+        }
+      }
+      
+      return fetchApi('/admin/users', {
+        method: 'POST',
+        body: formData
+      });
+    } else {
+      // Dacă nu există fișier, trimitem direct JSON
+      return fetchApi('/admin/users', {
+        method: 'POST',
+        body: userData
+      });
+    }
+  },
+  
+  // Actualizează un utilizator existent
+  updateUser: (userId, userData) => {
+    // Verificăm dacă există un fișier (profilePic)
+    const hasFile = userData.profilePic && userData.profilePic instanceof File;
+    
+    if (hasFile) {
+      // Dacă există un fișier, folosim FormData
+      const formData = new FormData();
+      
+      for (const [key, value] of Object.entries(userData)) {
+        if (key === 'profilePic' && value instanceof File) {
+          formData.append(key, value);
+        } else if (typeof value === 'object' && value !== null) {
+          formData.append(key, JSON.stringify(value));
+        } else {
+          formData.append(key, value);
+        }
+      }
+      
+      return fetchApi(`/admin/users/${userId}`, {
+        method: 'PUT',
+        body: formData
+      });
+    } else {
+      // Dacă nu există fișier, trimitem direct JSON
+      return fetchApi(`/admin/users/${userId}`, {
+        method: 'PUT',
+        body: userData
+      });
+    }
+  },
+  
+  // Șterge un utilizator
+  deleteUser: (userId) => 
+    fetchApi(`/admin/users/${userId}`, {
+      method: 'DELETE'
+    }),
+  
+  // Schimbă statusul unui utilizator (activare/dezactivare)
+  changeUserStatus: (userId, status) => 
+    fetchApi(`/admin/users/${userId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status })
+    }),
+    
+  // Resetează parola unui utilizator
+  resetUserPassword: (userId) => 
+    fetchApi(`/admin/users/${userId}/reset-password`, {
+      method: 'POST'
+    }),
+    
+  // Obține statistici generale despre utilizatori
+  getUserStats: () => 
+    fetchApi('/admin/stats', {
+      method: 'GET'
+    })
+};
+
 // Export the raw fetchApi for custom calls
 export { fetchApi };
 
@@ -301,5 +407,6 @@ export default {
   registrations: registrationsApi,
   notifications: notificationsApi,
   payments: paymentsApi,
+  admin: adminApi,
   fetch: fetchApi
 };

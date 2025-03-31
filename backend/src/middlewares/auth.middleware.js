@@ -42,3 +42,37 @@ export const protectedRoute = async (req,res,next) => {
         return res.status(500).json({ success: false, message: 'User retrieval failed', error: err.message });
     }
 }
+
+/**
+ * Middleware pentru verificarea dacă utilizatorul autentificat are rol de administrator
+ * Trebuie folosit după middleware-ul protectedRoute
+ */
+export const adminRoute = async (req, res, next) => {
+    try {
+        // Verificăm dacă există un utilizator autentificat (setat de protectedRoute)
+        if (!req.user) {
+            return res.status(401).json({ 
+                success: false, 
+                message: 'Authentication required' 
+            });
+        }
+
+        // Verificăm dacă utilizatorul are rolul de ADMIN
+        if (!req.user.roles || !req.user.roles.includes('ADMIN')) {
+            return res.status(403).json({ 
+                success: false, 
+                message: 'Access denied: Admin role required' 
+            });
+        }
+
+        // Utilizatorul este admin, poate continua
+        console.log("Admin route access granted");
+        next();
+    } catch (err) {
+        return res.status(500).json({ 
+            success: false, 
+            message: 'Admin verification failed', 
+            error: err.message 
+        });
+    }
+};

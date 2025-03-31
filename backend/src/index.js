@@ -11,6 +11,7 @@ import registrationRoute from './routes/registration.route.js'
 import statsRoute from './routes/stats.route.js'
 import notificationsRoute from './routes/notifications.route.js';
 import paymentsRoute from './routes/payments.route.js';
+import adminRoutes from './routes/admin.route.js';
 
 
 dotenv.config();
@@ -49,6 +50,7 @@ app.use("/api/registrations", registrationRoute);
 app.use("/api/stats", statsRoute);
 app.use("/api/notifications", notificationsRoute);
 app.use("/api/payments", paymentsRoute);
+app.use("/api/admin", adminRoutes);
 
 app.listen(5001, () => {
     connectDB();

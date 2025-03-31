@@ -4,6 +4,7 @@ import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import { useState, useEffect } from 'react'
 import ProtectedRoute from './components/ProtectedRoute'
+import AdminRoute from './components/AdminRoute'
 import { NotificationsProvider } from './context/NotificationsContext'
 
 // pages
@@ -20,6 +21,10 @@ import ForgotPassword from './pages/ForgotPassword'
 import VerifyEmail from './pages/VerifyEmail'
 import OrganizerStats from './pages/OrganizerStats'
 import Notifications from './pages/Notifications'
+import AdminDashboard from './pages/AdminDashboard'
+import AdminUserManagement from './pages/AdminUserManagement'
+import AdminUserCreateForm from './pages/AdminUserCreateForm'
+import AdminUserEditForm from './pages/AdminUserEditForm'
 
 function App() {
   const [user, setUser] = useState(null);
@@ -109,6 +114,24 @@ function App() {
                 <ProtectedRoute user={user}>
                   <Notifications />
                 </ProtectedRoute>} />
+                
+              {/** Admin routes - doar pentru administrarea utilizatorilor */}
+              <Route path="/admin" element={
+                <AdminRoute user={user}>
+                  <AdminDashboard user={user} />
+                </AdminRoute>} />
+              <Route path="/admin/users" element={
+                <AdminRoute user={user}>
+                  <AdminUserManagement />
+                </AdminRoute>} />
+              <Route path="/admin/users/create" element={
+                <AdminRoute user={user}>
+                  <AdminUserCreateForm />
+                </AdminRoute>} />
+              <Route path="/admin/users/:id/edit" element={
+                <AdminRoute user={user}>
+                  <AdminUserEditForm />
+                </AdminRoute>} />
             </Routes>
           </main>
           <Footer />

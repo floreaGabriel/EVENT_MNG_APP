@@ -124,24 +124,24 @@ const EventRegistrations = ({ user }) => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-10 w-10 flex-shrink-0">
-                          {registration.attendee.avatar ? (
+                          {registration.attendee?.avatar ? (
                             <img
                               className="h-10 w-10 rounded-full"
-                              src={registration.attendee.avatar}
-                              alt={`${registration.attendee.firstname} ${registration.attendee.lastname}`}
+                              src={registration.attendee?.avatar}
+                              alt={`${registration.attendee?.firstname} ${registration.attendee?.lastname}`}
                             />
                           ) : (
                             <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
-                              {registration.attendee.firstname.charAt(0)}{registration.attendee.lastname.charAt(0)}
+                              {registration.attendee?.firstname.charAt(0)}{registration.attendee?.lastname.charAt(0)}
                             </div>
                           )}
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {registration.attendee.firstname} {registration.attendee.lastname}
+                            {registration.attendee?.firstname} {registration.attendee?.lastname}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {registration.attendee.email}
+                            {registration.attendee?.email}
                           </div>
                         </div>
                       </div>

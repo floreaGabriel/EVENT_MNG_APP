@@ -115,6 +115,11 @@ const Navbar = ({ user, setUser }) => {
                         Statistics
                       </Link>
                     )}
+                    {user.roles && user.roles.includes("ADMIN") && (
+                      <Link to="/admin" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        Admin Dashboard
+                      </Link>
+                    )}
                     <Link to="/notifications" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                       Notifications
                     </Link>
@@ -238,6 +243,11 @@ const Navbar = ({ user, setUser }) => {
               {user?.roles?.includes('ORGANIZER') && (
                 <Link to="/organizer-stats" className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-blue-700 hover:bg-gray-100">
                   Statistics
+                </Link>
+              )}
+              {user.roles && user.roles.includes("ADMIN") && (
+                <Link to="/admin" className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-blue-700 hover:bg-gray-100">
+                  Admin Dashboard
                 </Link>
               )}
               <Link to="/notifications" className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-blue-700 hover:bg-gray-100">
