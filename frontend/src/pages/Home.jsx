@@ -145,40 +145,91 @@ const Home = () => {
         )}
       </div>
 
-      {/* Categories Section */}
-      <div className="bg-gray-50 py-12">
+      {/* About Our Company Section */}
+      <div className="bg-gradient-to-br from-white to-blue-50 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
+          <div className="text-center mb-16">
             <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-              Browse by Category
+              <span className="inline-block transform hover:scale-105 transition-transform duration-300">
+                Despre EventHub
+              </span>
             </h2>
-            <p className="mt-3 max-w-2xl mx-auto text-xl text-gray-500 sm:mt-4">
-              Find events that match your interests
+            <div className="h-1 w-20 bg-blue-500 mx-auto mt-2 mb-4 rounded transform hover:scale-x-150 transition-all duration-300 ease-in-out"></div>
+            <p className="mt-3 max-w-2xl mx-auto text-xl text-gray-600 sm:mt-4">
+              Conectăm oamenii prin experiențe memorabile
             </p>
           </div>
           
-          <div className="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {['Concert', 'Festival', 'Workshop', 'Conference', 'Party', 'Exhibition', 'SportEvent', 'Charity', 'Other'].map((category) => (
-              <Link
-                key={category}
-                to={`/events?category=${category}`}
-                className="bg-white rounded-lg shadow-sm p-6 text-center hover:shadow-md transition-shadow duration-200"
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <div className="bg-white p-8 rounded-lg shadow-lg transform transition-all duration-300 hover:-translate-y-2 hover:shadow-xl">
+              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mb-5 mx-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">Misiunea Noastră</h3>
+              <p className="text-gray-600 text-center">
+                Să facilităm organizarea și descoperirea evenimentelor, făcând mai ușoară conectarea oamenilor cu experiențe care le îmbogățesc viața.
+              </p>
+            </div>
+            
+            <div className="bg-white p-8 rounded-lg shadow-lg transform transition-all duration-300 hover:-translate-y-2 hover:shadow-xl">
+              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mb-5 mx-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">Ce ne face diferiți</h3>
+              <p className="text-gray-600 text-center">
+                Platforma noastră intuitivă și personalizată ajută atât organizatorii cât și participanții să se conecteze fără efort, în comunitatea lor locală.
+              </p>
+            </div>
+            
+            <div className="bg-white p-8 rounded-lg shadow-lg transform transition-all duration-300 hover:-translate-y-2 hover:shadow-xl">
+              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mb-5 mx-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">Comunitatea Noastră</h3>
+              <p className="text-gray-600 text-center">
+                Peste 10,000 de utilizatori activi și 500 de organizatori de evenimente folosesc platforma noastră lunar pentru a crea conexiuni valoroase.
+              </p>
+            </div>
+          </div>
+          
+          <div className="mt-16 text-center">
+            <div className="inline-flex items-center space-x-8 py-5 px-8 rounded-full bg-white shadow-lg transform transition-all duration-300 hover:scale-105">
+              <div className="flex flex-col items-center">
+                <span className="text-4xl font-bold text-blue-600 animate-pulse">5000+</span>
+                <span className="text-gray-500">Evenimente</span>
+              </div>
+              <div className="h-10 w-px bg-gray-200"></div>
+              <div className="flex flex-col items-center">
+                <span className="text-4xl font-bold text-blue-600 animate-pulse">150+</span>
+                <span className="text-gray-500">Orașe</span>
+              </div>
+              <div className="h-10 w-px bg-gray-200"></div>
+              <div className="flex flex-col items-center">
+                <span className="text-4xl font-bold text-blue-600 animate-pulse">50K+</span>
+                <span className="text-gray-500">Participanți</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-16">
+            <div className="flex flex-col md:flex-row justify-center items-center space-y-8 md:space-y-0 md:space-x-12">
+              <Link 
+                to="/events" 
+                className="px-8 py-3 bg-blue-600 text-white rounded-md shadow transform transition-all duration-300 hover:bg-blue-700 hover:scale-105 flex items-center space-x-2"
               >
-                <div className="text-blue-600 mb-3">
-                  {/* Simple category icons using emojis */}
-                  {category === 'Concert' && '🎵'}
-                  {category === 'Festival' && '🎪'}
-                  {category === 'Workshop' && '🛠️'}
-                  {category === 'Conference' && '💼'}
-                  {category === 'Party' && '🎉'}
-                  {category === 'Exhibition' && '🖼️'}
-                  {category === 'SportEvent' && '⚽'}
-                  {category === 'Charity' && '💝'}
-                  {category === 'Other' && '✨'}
-                </div>
-                <h3 className="text-lg font-medium text-gray-900">{category}</h3>
+                <span>Explorează Evenimente</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
               </Link>
-            ))}
+              
+            </div>
           </div>
         </div>
       </div>
