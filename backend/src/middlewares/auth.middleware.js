@@ -19,7 +19,7 @@ export const protectedRoute = async (req,res,next) => {
          //console.log('token: ', token);
          
         if (!token) {
-            console.log("No token providede error----");
+            console.log("No token provided error----");
             return res.status(401).json({ success: false, message: 'No token provided' });
         }
 

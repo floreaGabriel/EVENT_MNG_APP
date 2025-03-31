@@ -1,6 +1,7 @@
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom'
 import './App.css'
 import Navbar from './components/Navbar'
+import Footer from './components/Footer'
 import { useState, useEffect } from 'react'
 import ProtectedRoute from './components/ProtectedRoute'
 import { NotificationsProvider } from './context/NotificationsContext'
@@ -110,11 +111,7 @@ function App() {
                 </ProtectedRoute>} />
             </Routes>
           </main>
-          <footer className="bg-gray-800 text-white py-6">
-            <div className="max-w-7xl mx-auto px-4">
-              <p className="text-center">© 2025 EventHub. All rights reserved.</p>
-            </div>
-          </footer>
+          <Footer />
         </div>
       </NotificationsProvider>
     </Router>
