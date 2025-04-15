@@ -1,9 +1,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 
-/**
- * Componentă pentru protejarea rutelor de administrator
- * Permite accesul doar utilizatorilor cu rol ADMIN
- */
+// Component pentru a proteja rutele de admin
+
 const AdminRoute = ({ user, children }) => {
   const location = useLocation();
 

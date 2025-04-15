@@ -43,10 +43,7 @@ export const protectedRoute = async (req,res,next) => {
     }
 }
 
-/**
- * Middleware pentru verificarea dacă utilizatorul autentificat are rol de administrator
- * Trebuie folosit după middleware-ul protectedRoute
- */
+
 export const adminRoute = async (req, res, next) => {
     try {
         // Verificăm dacă există un utilizator autentificat (setat de protectedRoute)

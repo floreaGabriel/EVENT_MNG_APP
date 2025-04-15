@@ -3,11 +3,7 @@ import User from '../models/user.model.js';
 import Event from '../models/event.model.js';
 import mongoose from 'mongoose';
 
-/**
- * @desc    Get all notifications for a user
- * @route   GET /api/notifications
- * @access  Private
- */
+
 export const getUserNotifications = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -40,11 +36,7 @@ export const getUserNotifications = async (req, res) => {
   }
 };
 
-/**
- * @desc    Mark notification as read
- * @route   PUT /api/notifications/:id/read
- * @access  Private
- */
+
 export const markNotificationAsRead = async (req, res) => {
   try {
     const notificationId = req.params.id;
@@ -82,11 +74,7 @@ export const markNotificationAsRead = async (req, res) => {
   }
 };
 
-/**
- * @desc    Mark all notifications as read
- * @route   PUT /api/notifications/read-all
- * @access  Private
- */
+
 export const markAllNotificationsAsRead = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -112,11 +100,6 @@ export const markAllNotificationsAsRead = async (req, res) => {
   }
 };
 
-/**
- * @desc    Delete a notification
- * @route   DELETE /api/notifications/:id
- * @access  Private
- */
 export const deleteNotification = async (req, res) => {
   try {
     const notificationId = req.params.id;
@@ -152,10 +135,7 @@ export const deleteNotification = async (req, res) => {
   }
 };
 
-/**
- * @desc    Create a notification (utility function for internal use)
- * @access  Private
- */
+
 export const createNotification = async (userId, type, message, eventId = null) => {
   try {
     // Verifică dacă utilizatorul există
@@ -190,10 +170,6 @@ export const createNotification = async (userId, type, message, eventId = null) 
   }
 };
 
-/**
- * @desc    Delete all notifications for an event
- * @access  Private (pentru uz intern)
- */
 export const deleteEventNotifications = async (eventId) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(eventId)) {

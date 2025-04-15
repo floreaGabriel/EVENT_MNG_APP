@@ -43,7 +43,6 @@ export const signup = async (req, res) => {
         console.log(`user created: ${newUser.username}`);
 
         try {
-            // Încearcă să trimiți emailul de verificare
             await sendVerifyEmailHelper(newUser._id);
         } catch (emailError) {
             // Dacă trimiterea emailului eșuează, șterge utilizatorul

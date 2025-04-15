@@ -3,11 +3,7 @@ import Event from "../models/event.model.js";
 import User from "../models/user.model.js";
 import { createNotification } from "./notifications.controller.js";
 
-/**
- * @desc    Procesează o plată (simulat)
- * @route   POST /api/payments/process
- * @access  Private
- */
+
 export const processPayment = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -117,11 +113,7 @@ export const processPayment = async (req, res) => {
   }
 };
 
-/**
- * @desc    Verifică statusul plății pentru o înregistrare
- * @route   GET /api/payments/status/:registrationId
- * @access  Private
- */
+
 export const getPaymentStatus = async (req, res) => {
   try {
     const userId = req.user._id;

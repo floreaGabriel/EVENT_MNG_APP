@@ -1,10 +1,5 @@
 import transporter from './nodemailer.js';
 
-/**
- * Trimite un email de verificare pentru utilizatorul nou înregistrat
- * @param {Object} user - Obiectul utilizator
- * @returns {Promise} - Rezultatul trimiterii emailului
- */
 export const sendVerificationEmail = async (user) => {
     const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${user.verificationToken}`;
 
@@ -38,11 +33,7 @@ export const sendVerificationEmail = async (user) => {
     return await transporter.sendMail(mailOptions);
 };
 
-/**
- * Trimite un email pentru resetarea parolei
- * @param {Object} user - Obiectul utilizator
- * @returns {Promise} - Rezultatul trimiterii emailului
- */
+
 export const sendPasswordResetEmail = async (user) => {
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${user.resetPasswordToken}`;
 
@@ -76,12 +67,7 @@ export const sendPasswordResetEmail = async (user) => {
     return await transporter.sendMail(mailOptions);
 };
 
-/**
- * Trimite un email cu parola temporară
- * @param {Object} user - Obiectul utilizator
- * @param {String} temporaryPassword - Parola temporară generată
- * @returns {Promise} - Rezultatul trimiterii emailului
- */
+
 export const sendTemporaryPasswordEmail = async (user, temporaryPassword) => {
     const mailOptions = {
         from: `"Aplicația de evenimente" <${process.env.SMTP_USER}>`,
