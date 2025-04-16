@@ -583,8 +583,8 @@ const EventDetails = ({ user }) => {
             {/* Venue Information */}
             <div className="bg-white rounded-lg shadow-md p-6 mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Venue</h2>
-              <div className="flex items-start">
-                <div className="bg-yellow-100 rounded-full p-2 mr-4">
+              <div className="flex flex-col w-full">
+                <div className="bg-yellow-100 rounded-full p-2 mr-4 w-9">
                   <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -596,7 +596,7 @@ const EventDetails = ({ user }) => {
                   <p className="text-gray-600">{event.location.city}, {event.location.country}</p>
                   
                   {/* Add a map placeholder */}
-                  <div className="mt-4 w-2xl">
+                  <div className="mt-4 w-full">
                     <GoogleMap
                       latitude={event.location.coordinates.latitude}
                       longitude={event.location.coordinates.longitude}
