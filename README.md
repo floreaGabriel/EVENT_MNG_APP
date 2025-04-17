@@ -3,7 +3,7 @@
 EventHub is a full-stack web application designed for creating, managing, and discovering events. The platform has three types of users: participants (who can browse and register for events), organizers (who can create and manage events), and administrators (who can manage users and platform operations).
 
 ## 📑 Table of Contents
-- [📋 Features](#📋-features)
+- [📋 Features](#features)
   - [For Participants](#for-participants)
   - [For Organizers](#for-organizers)
   - [For Administrators](#for-administrators)
@@ -20,7 +20,7 @@ EventHub is a full-stack web application designed for creating, managing, and di
 - [Scenario for testing](#scenario-for-testing)
 - [👥 Contributors](#👥-contributors)
 
-## 📋 Features
+## Features
 
 ### For Participants
 - Browse and search events by category, location, date, and other filters
