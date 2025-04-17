@@ -8,7 +8,7 @@ EventHub is a full-stack web application designed for creating, managing, and di
   - [For Organizers](#for-organizers)
   - [For Administrators](#for-administrators)
   - [General Features](#general-features)
-- [🛠️ Technology Stack](#️🛠️-technology-stack)
+- [🛠️ Technology Stack](#️🛠️technology-stack)
 - [📁 Project Structure](#📁-project-structure)
 - [🚀 Installation and Setup](#🚀-installation-and-setup)
   - [Prerequisites](#prerequisites)
@@ -49,7 +49,7 @@ EventHub is a full-stack web application designed for creating, managing, and di
 - Email notifications
 - Responsive design
 
-## 🛠️ Technology Stack
+## 🛠️Technology Stack
 
 ### Backend
 - **Node.js** and **Express** - Server framework
