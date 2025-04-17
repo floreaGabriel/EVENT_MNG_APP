@@ -8,17 +8,17 @@ EventHub is a full-stack web application designed for creating, managing, and di
   - [For Organizers](#for-organizers)
   - [For Administrators](#for-administrators)
   - [General Features](#general-features)
-- [🛠️ Technology Stack](#️🛠️technology-stack)
-- [📁 Project Structure](#📁-project-structure)
-- [🚀 Installation and Setup](#🚀-installation-and-setup)
+- [🛠️ Technology Stack](#️technology-stack)
+- [📁 Project Structure](#project-structure)
+- [🚀 Installation and Setup](#installation-and-setup)
   - [Prerequisites](#prerequisites)
   - [Backend Setup](#backend-setup)
   - [Frontend Setup](#frontend-setup)
-- [🧪 Setting Up Test Data](#🧪-setting-up-test-data)
-- [📝 API Documentation](#📝-api-documentation)
-- [🔒 User Roles and Permissions](#🔒-user-roles-and-permissions)
+- [🧪 Setting Up Test Data](#setting-up-test-data)
+- [📝 API Documentation](#api-documentation)
+- [🔒 User Roles and Permissions](#user-roles-and-permissions)
 - [Scenario for testing](#scenario-for-testing)
-- [👥 Contributors](#👥-contributors)
+- [👥 Contributors](#contributors)
 
 ## Features
 
@@ -49,7 +49,7 @@ EventHub is a full-stack web application designed for creating, managing, and di
 - Email notifications
 - Responsive design
 
-## 🛠️Technology Stack
+## Technology Stack
 
 ### Backend
 - **Node.js** and **Express** - Server framework
@@ -65,7 +65,7 @@ EventHub is a full-stack web application designed for creating, managing, and di
 - **Tailwind CSS** - Styling
 - **Axios** - API client
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 /
@@ -86,7 +86,7 @@ EventHub is a full-stack web application designed for creating, managing, and di
 |   |   App.jsx     # Frontend Entrypoint
 ```
 
-## 🚀 Installation and Setup
+## Installation and Setup
 
 ### Prerequisites
 - Node.js (v14 or higher)
@@ -151,7 +151,7 @@ EventHub is a full-stack web application designed for creating, managing, and di
 
 4. Access the application at `http://localhost:5000`
 
-## 🧪 Setting Up Test Data
+## Setting Up Test Data
 
 To set up test data, you can use the following steps:
 
@@ -159,7 +159,7 @@ To set up test data, you can use the following steps:
 2. Use MongoDB Compass or another MongoDB client to update the user's roles to include 'ADMIN'
 3. Log in as the admin and create other users through the admin interface
 
-## 📝 API Documentation
+## API Documentation
 
 The API is organized around RESTful principles. It uses standard HTTP response codes and returns responses in JSON format.
 
@@ -198,7 +198,7 @@ Most endpoints require authentication using a JWT token. The token is obtained a
   - `PUT /admin/users/:id` - Update a user
   - `DELETE /admin/users/:id` - Delete a user
 
-## 🔒 User Roles and Permissions
+## User Roles and Permissions
 
 The application has three user roles:
 
@@ -338,7 +338,7 @@ The application has three user roles:
 Note: When testing the application, remember that you may need to refresh the page to see updates for notifications and some real-time changes.
 
 
-## 👥 Contributors
+## Contributors
 
 - Florea Cristian Gabriel - Work and development
 
