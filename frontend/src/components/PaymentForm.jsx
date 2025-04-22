@@ -35,10 +35,12 @@ const PaymentForm = ({ registration, onSuccess, onCancel }) => {
       // Simulăm un delay pentru procesarea plății
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Procesăm plata
+      // Procesăm plata și actualizăm statusul plății
       const response = await paymentsApi.processPayment(registration._id, cardDetails);
       
       if (response.success) {
+        // Aici se va reflecta schimbarea statusului de plată în PAID
+        // Serviciul API va actualiza înregistrarea în backend
         onSuccess(response.data);
       } else {
         setError(response.message || 'A apărut o eroare la procesarea plății.');

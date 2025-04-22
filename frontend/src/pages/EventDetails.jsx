@@ -259,15 +259,10 @@ const EventDetails = ({ user }) => {
   const renderActionButton = () => {
     if (!user) {
       return (
-        <button
-          onClick={handleRegister}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md"
-        >
-          Înregistrează-te
-        </button>
+        <></>
       );
     }
-
+  
     if (event?.organizer?._id === user._id) {
       return (
         <Link
@@ -278,18 +273,18 @@ const EventDetails = ({ user }) => {
         </Link>
       );
     }
-
+  
     if (!registrationSuccess) {
       return (
         <button
           onClick={handleRegister}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md"
+          className="bg-blue-600 w-full hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md"
         >
           Înregistrează-te
         </button>
       );
     }
-
+  
     if (registrationStatus === 'CANCELLED') {
       return (
         <button
@@ -300,7 +295,24 @@ const EventDetails = ({ user }) => {
         </button>
       );
     }
-
+  
+    if (registrationStatus === 'PENDING') {
+      return (
+        <div className="flex flex-col space-y-2">
+          <div className="bg-yellow-100 text-yellow-800 p-3 rounded-lg">
+            Înregistrarea ta este în așteptarea confirmării organizatorului.
+          </div>
+          <button
+            onClick={handleCancelRegistration}
+            disabled={cancelling}
+            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md"
+          >
+            {cancelling ? 'Se anulează...' : 'Anulează înregistrarea'}
+          </button>
+        </div>
+      );
+    }
+  
     if (registrationStatus === 'CONFIRMED') {
       // Verifică dacă este nevoie de plată
       if (registrationData?.paymentStatus === 'UNPAID' && !event?.pricing?.isFree) {
@@ -340,24 +352,7 @@ const EventDetails = ({ user }) => {
         </div>
       );
     }
-
-    if (registrationStatus === 'PENDING') {
-      return (
-        <div className="flex flex-col space-y-2">
-          <div className="bg-yellow-100 text-yellow-800 p-3 rounded-lg">
-            Înregistrarea ta este în așteptarea confirmării organizatorului.
-          </div>
-          <button
-            onClick={handleCancelRegistration}
-            disabled={cancelling}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md"
-          >
-            {cancelling ? 'Se anulează...' : 'Anulează înregistrarea'}
-          </button>
-        </div>
-      );
-    }
-
+  
     return (
       <button
         onClick={handleRegister}
